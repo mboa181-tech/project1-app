@@ -11,7 +11,7 @@
 [![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen?style=for-the-badge&logo=github-actions)](https://github.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
-[🌐 View Live Production Demo](https://flowdesk.yourdomain.com) • [📖 API Documentation](https://flowdesk.yourdomain.com/docs) • [🐞 Report Issue](https://github.com/yourusername/flowdesk/issues)
+[🌐 View Live Production Demo](https://project1-app-khaki.vercel.app/) • [📖 GitHub Repository](https://github.com/mboa181-tech/project1-app) • [🐞 Report Issue](https://github.com/mboa181-tech/project1-app/issues)
 
 </div>
 
@@ -38,7 +38,7 @@ For hiring managers and reviewers who want to inspect the application immediatel
 | **Organization Owner** | `owner@demo.flowdesk.app` | `DemoPass2026!` | Full admin rights, billing, team management, audit logs |
 | **Billing Member** | `staff@demo.flowdesk.app` | `DemoPass2026!` | Create/edit invoices, view clients, download PDF |
 
-> 🔗 **Live Demo URL:** [https://flowdesk.yourdomain.com](https://flowdesk.yourdomain.com)  
+> 🔗 **Live Demo URL:** [https://project1-app-khaki.vercel.app/](https://project1-app-khaki.vercel.app/)  
 > *(Automated daily database seeding runs at 00:00 UTC to maintain pristine demo state).*
 
 ---
@@ -147,8 +147,8 @@ flowchart TD
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/flowdesk.git
-cd flowdesk
+git clone https://github.com/mboa181-tech/project1-app.git
+cd project1-app
 ```
 
 ### 2. Configure Environment Variables
@@ -220,4 +220,4 @@ Feel free to adapt this bullet point for your professional resume:
 Distributed under the **MIT License**. See `LICENSE` for more information.
 
 Engineered with passion by **[Your Name]**  
-* GitHub: [@yourusername](https://github.com/yourusername) • LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile) • Email: `you@example.com`
+* GitHub: [@mboa181-tech](https://github.com/mboa181-tech) • LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile) • Email: `you@example.com`
