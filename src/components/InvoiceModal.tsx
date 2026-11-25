@@ -10,10 +10,19 @@ interface InvoiceModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (invoice: Invoice) => void;
+  editingInvoice?: Invoice | null;
+  onUpdate?: (invoice: Invoice) => void;
 }
 
-export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
+export function InvoiceModal({
+  isOpen,
+  onClose,
+  onCreate,
+  editingInvoice,
+  onUpdate,
+}: InvoiceModalProps) {
   const { t, lang } = useLanguage();
+  const isEditing = Boolean(editingInvoice);
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [currency, setCurrency] = useState("IDR");
@@ -23,6 +32,28 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
   const [items, setItems] = useState<InvoiceItem[]>([
     { id: "1", description: lang === "id" ? "Sprint Pengembangan Full-Stack" : "Full-Stack Development Sprint", quantity: 1, rate: 52500000, amount: 52500000 },
   ]);
+
+  useEffect(() => {
+    if (editingInvoice) {
+      setClientName(editingInvoice.clientName);
+      setClientEmail(editingInvoice.clientEmail);
+      setCurrency(editingInvoice.currency || "IDR");
+      setDueDate(editingInvoice.dueDate);
+      setTaxRate(editingInvoice.taxRate);
+      setNotes(editingInvoice.notes || "");
+      setItems(editingInvoice.items.length > 0 ? editingInvoice.items : [{ id: "1", description: "", quantity: 1, rate: 0, amount: 0 }]);
+    } else if (isOpen) {
+      setClientName("");
+      setClientEmail("");
+      setCurrency("IDR");
+      setDueDate("2026-12-31");
+      setTaxRate(11);
+      setNotes(lang === "id" ? "Pembayaran jatuh tempo sesuai syarat perjanjian." : "Payment due within net terms.");
+      setItems([
+        { id: "1", description: lang === "id" ? "Sprint Pengembangan Full-Stack" : "Full-Stack Development Sprint", quantity: 1, rate: 52500000, amount: 52500000 },
+      ]);
+    }
+  }, [editingInvoice, isOpen, lang]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -78,6 +109,25 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
     e.preventDefault();
     if (!clientName || !clientEmail) return;
 
+    if (isEditing && editingInvoice && onUpdate) {
+      const updatedInvoice: Invoice = {
+        ...editingInvoice,
+        clientName,
+        clientEmail,
+        dueDate,
+        items,
+        subtotal,
+        taxRate,
+        taxAmount,
+        total,
+        currency,
+        notes,
+      };
+      onUpdate(updatedInvoice);
+      onClose();
+      return;
+    }
+
     const newInvoice: Invoice = {
       id: `inv-${Date.now().toString().slice(-4)}`,
       invoiceNumber: `INV-2026-${Math.floor(100 + Math.random() * 900)}`,
@@ -105,13 +155,13 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-[#0e1424]/95 backdrop-blur-md z-10">
           <div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <span>{t("modalCreateTitle")}</span>
+              <span>{isEditing ? t("modalEditTitle") : t("modalCreateTitle")}</span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400">
-                PRO-FORMA
+                {isEditing ? editingInvoice?.invoiceNumber : "PRO-FORMA"}
               </span>
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {t("modalCreateSub")}
+              {isEditing ? t("modalEditSub") : t("modalCreateSub")}
             </p>
           </div>
           <button
@@ -303,7 +353,7 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
               type="submit"
               className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md shadow-brand-600/25 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
             >
-              {t("modalSubmit")}
+              {isEditing ? t("modalSaveChanges") : t("modalSubmit")}
             </button>
           </div>
         </form>

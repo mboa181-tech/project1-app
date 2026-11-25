@@ -88,6 +88,35 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
+// PUT /api/invoices - Full update of an existing invoice
+export async function PUT(req: NextRequest) {
+  try {
+    const updatedInvoice: Invoice = await req.json();
+    if (!updatedInvoice.id) {
+      return NextResponse.json({ error: "Missing invoice ID" }, { status: 400 });
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from("invoices")
+        .update(mapToDb(updatedInvoice))
+        .eq("id", updatedInvoice.id);
+      if (error) {
+        console.error("Supabase full update error:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+    }
+
+    localInvoicesStore = localInvoicesStore.map((inv) =>
+      inv.id === updatedInvoice.id ? updatedInvoice : inv
+    );
+
+    return NextResponse.json({ success: true, invoice: updatedInvoice });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 400 });
+  }
+}
+
 // DELETE /api/invoices - Delete invoice
 export async function DELETE(req: NextRequest) {
   try {

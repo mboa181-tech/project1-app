@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   FileCode2,
   Eye,
+  Pencil,
   Trash2,
   ArrowUpDown,
   Download,
@@ -22,6 +23,7 @@ import {
 interface InvoiceTableProps {
   invoices: Invoice[];
   onViewInvoice: (invoice: Invoice) => void;
+  onEditInvoice?: (invoice: Invoice) => void;
   onToggleStatus: (invoiceId: string) => void;
   onDeleteInvoice: (invoiceId: string) => void;
 }
@@ -44,6 +46,7 @@ function getAvatarGradient(name: string) {
 export function InvoiceTable({
   invoices,
   onViewInvoice,
+  onEditInvoice,
   onToggleStatus,
   onDeleteInvoice,
 }: InvoiceTableProps) {
@@ -364,6 +367,15 @@ export function InvoiceTable({
                           <Eye className="w-3.5 h-3.5" />
                           <span className="hidden md:inline">{t("tablePreview")}</span>
                         </button>
+                        {onEditInvoice && (
+                          <button
+                            onClick={() => onEditInvoice(inv)}
+                            title="Edit"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => onDeleteInvoice(inv.id)}
                           title="Delete"

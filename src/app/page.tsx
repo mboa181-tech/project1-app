@@ -5,6 +5,7 @@ import { Invoice, DemoUser } from "@/lib/types";
 import { initialInvoices, initialDemoUsers } from "@/lib/mock-data";
 import { Navbar } from "@/components/Navbar";
 import { StatsOverview } from "@/components/StatsOverview";
+import { RevenueAnalytics } from "@/components/RevenueAnalytics";
 import { InvoiceTable } from "@/components/InvoiceTable";
 import { InvoiceModal } from "@/components/InvoiceModal";
 import { InvoiceDetailModal } from "@/components/InvoiceDetailModal";
@@ -26,6 +27,7 @@ export default function DashboardPage() {
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [isDark, setIsDark] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -115,6 +117,27 @@ export default function DashboardPage() {
     }
   };
 
+  const handleUpdateInvoice = async (updatedInvoice: Invoice) => {
+    setInvoices((prev) =>
+      prev.map((inv) => (inv.id === updatedInvoice.id ? updatedInvoice : inv))
+    );
+    showToast(
+      lang === "id"
+        ? `Perubahan pada ${updatedInvoice.invoiceNumber} disimpan!`
+        : `Invoice ${updatedInvoice.invoiceNumber} updated!`
+    );
+
+    try {
+      await fetch("/api/invoices", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedInvoice),
+      });
+    } catch (err) {
+      console.error("API update error:", err);
+    }
+  };
+
   const handleToggleStatus = async (invoiceId: string) => {
     const target = invoices.find((inv) => inv.id === invoiceId);
     if (!target) return;
@@ -145,6 +168,27 @@ export default function DashboardPage() {
       });
     } catch (err) {
       console.error("API error:", err);
+    }
+  };
+
+  const handleUpdateInvoice = async (updatedInvoice: Invoice) => {
+    setInvoices((prev) =>
+      prev.map((inv) => (inv.id === updatedInvoice.id ? updatedInvoice : inv))
+    );
+    showToast(
+      lang === "id"
+        ? `Perubahan pada ${updatedInvoice.invoiceNumber} disimpan!`
+        : `Invoice ${updatedInvoice.invoiceNumber} updated!`
+    );
+
+    try {
+      await fetch("/api/invoices", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedInvoice),
+      });
+    } catch (err) {
+      console.error("API update error:", err);
     }
   };
 
@@ -238,9 +282,15 @@ export default function DashboardPage() {
 
         <StatsOverview invoices={invoices} />
 
+        <RevenueAnalytics invoices={invoices} />
+
         <InvoiceTable
           invoices={invoices}
           onViewInvoice={(inv) => setSelectedInvoice(inv)}
+          onEditInvoice={(inv) => {
+            setEditingInvoice(inv);
+            setIsCreateOpen(true);
+          }}
           onToggleStatus={handleToggleStatus}
           onDeleteInvoice={handleDeleteInvoice}
         />
@@ -248,8 +298,13 @@ export default function DashboardPage() {
 
       <InvoiceModal
         isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
+        onClose={() => {
+          setIsCreateOpen(false);
+          setEditingInvoice(null);
+        }}
         onCreate={handleCreateInvoice}
+        editingInvoice={editingInvoice}
+        onUpdate={handleUpdateInvoice}
       />
 
       <InvoiceDetailModal

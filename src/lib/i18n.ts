@@ -57,7 +57,9 @@ export const translations = {
 
     // Modal Create
     modalCreateTitle: "Create New Invoice",
+    modalEditTitle: "Edit Invoice",
     modalCreateSub: "Issue an immutable financial invoice with automated tax calculations",
+    modalEditSub: "Update invoice details, line items, and tax calculations",
     modalClientName: "Client Company Name",
     modalClientEmail: "Client Billing Email",
     modalCurrency: "Currency",
@@ -77,6 +79,7 @@ export const translations = {
     modalGrandTotal: "Grand Total",
     modalCancel: "Cancel",
     modalSubmit: "Issue & Register Invoice",
+    modalSaveChanges: "Save Changes",
 
     // Modal Detail
     detailInvoice: "INVOICE",
@@ -206,7 +209,9 @@ export const translations = {
 
     // Modal Create
     modalCreateTitle: "Buat Tagihan Baru",
+    modalEditTitle: "Edit Tagihan",
     modalCreateSub: "Terbitkan invoice resmi dengan kalkulasi pajak dan subtotal otomatis",
+    modalEditSub: "Perbarui rincian tagihan, daftar layanan, dan kalkulasi pajak",
     modalClientName: "Nama Perusahaan Klien",
     modalClientEmail: "Email Penagihan Klien",
     modalCurrency: "Mata Uang",
@@ -226,6 +231,7 @@ export const translations = {
     modalGrandTotal: "Total Akhir",
     modalCancel: "Batal",
     modalSubmit: "Terbitkan & Simpan Invoice",
+    modalSaveChanges: "Simpan Perubahan",
 
     // Modal Detail
     detailInvoice: "FAKTUR TAGIHAN",
