@@ -213,8 +213,8 @@ export default function DashboardPage() {
   return (
     <div className="relative min-h-screen">
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-slate-900 text-white shadow-2xl border border-slate-700/60 text-xs font-semibold">
-          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-2.5 px-5 py-2.5 rounded-full glass-modal shadow-2xl border border-[var(--gd-rim)] text-xs font-bold text-[var(--gd-ink)] animate-bounce">
+          <Check className="w-4 h-4 text-[var(--gd-teal)] shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}

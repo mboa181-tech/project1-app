@@ -813,10 +813,22 @@ function RevenueChart({ labels, revenue, costs }: { labels: string[]; revenue: n
 const deviceLabels = ["Desktop", "Mobile", "Tablet"];
 const deviceTones: ChartTone[] = ["coral", "ink", "teal"];
 
-function DeviceChart({ mix, visitors }: { mix: number[]; visitors: number }) {
+function DeviceChart({
+  mix,
+  visitors,
+  labels = deviceLabels,
+  tones = deviceTones,
+  unit = "Visitors",
+}: {
+  mix: number[];
+  visitors: number;
+  labels?: string[];
+  tones?: ChartTone[];
+  unit?: string;
+}) {
   const maskId = `gd-ring-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const [active, setActive] = useState<number | null>(null);
-  return <div className="gd-device" aria-label="Visitors by device">
+  return <div className="gd-device" aria-label={unit}>
     <div className="gd-device-ring">
       <svg viewBox="0 0 124 124" aria-hidden="true">
         <defs>
@@ -827,8 +839,8 @@ function DeviceChart({ mix, visitors }: { mix: number[]; visitors: number }) {
         </defs>
         <circle cx="62" cy="62" r="47" fill="none" stroke="var(--gd-track)" strokeWidth="14" />
         <g mask={`url(#${maskId})`} transform="rotate(-90 62 62)">
-          {mix.map((ratio, index) => <circle key={deviceLabels[index]} cx="62" cy="62" r="47" pathLength="100"
-            fill="none" strokeWidth="14" data-tone={deviceTones[index]} className="gd-device-segment"
+          {mix.map((ratio, index) => <circle key={labels[index] || index} cx="62" cy="62" r="47" pathLength="100"
+            fill="none" strokeWidth="14" data-tone={tones[index] || "ink"} className="gd-device-segment"
             data-muted={active !== null && index !== active}
             strokeDasharray={`${Math.max(0, ratio - 1.1)} 100`}
             strokeDashoffset={-mix.slice(0, index).reduce((sum, value) => sum + value, 0)} />)}
@@ -836,16 +848,16 @@ function DeviceChart({ mix, visitors }: { mix: number[]; visitors: number }) {
       </svg>
       <div className="gd-device-total">
         <strong>{active === null ? <Counter value={visitors} /> : number.format(Math.round(visitors * mix[active] / 100))}</strong>
-        <span>{active === null ? "Visitors" : deviceLabels[active]}</span>
+        <span>{active === null ? unit : labels[active]}</span>
       </div>
     </div>
     <div className="gd-device-list">
       {mix.map((ratio, index) => (
-        <button type="button" key={deviceLabels[index]} aria-pressed={active === index}
-          aria-label={`${deviceLabels[index]}, ${ratio}% of visitors`}
+        <button type="button" key={labels[index] || index} aria-pressed={active === index}
+          aria-label={`${labels[index]}, ${ratio}%`}
           onClick={() => setActive(active === index ? null : index)}>
-          <span><i data-tone={deviceTones[index]} aria-hidden="true" />{deviceLabels[index]}</span>
-          <span className="gd-mix-track" aria-hidden="true"><i className="gd-fill" data-tone={deviceTones[index]} style={{ width: `${ratio}%` }} /></span>
+          <span><i data-tone={tones[index] || "ink"} aria-hidden="true" />{labels[index]}</span>
+          <span className="gd-mix-track" aria-hidden="true"><i className="gd-fill" data-tone={tones[index] || "ink"} style={{ width: `${ratio}%` }} /></span>
           <strong>{ratio}%</strong>
         </button>
       ))}
@@ -1320,7 +1332,13 @@ function AnalyticsView({ period, type, download, invoices, onViewInvoice, onEdit
             />
           </Panel>
           <Panel title="Distribusi Status" className="gd-device-panel">
-            <DeviceChart mix={[paidPct, pendingPct, otherPct]} visitors={invoices.length} />
+            <DeviceChart
+              mix={[paidPct, pendingPct, otherPct]}
+              visitors={invoices.length}
+              labels={["Lunas", "Tertunda", "Lainnya"]}
+              tones={["teal", "ochre", "coral"]}
+              unit="Tagihan"
+            />
           </Panel>
         </div>
         {trend ? (
