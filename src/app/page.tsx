@@ -171,27 +171,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleUpdateInvoice = async (updatedInvoice: Invoice) => {
-    setInvoices((prev) =>
-      prev.map((inv) => (inv.id === updatedInvoice.id ? updatedInvoice : inv))
-    );
-    showToast(
-      lang === "id"
-        ? `Perubahan pada ${updatedInvoice.invoiceNumber} disimpan!`
-        : `Invoice ${updatedInvoice.invoiceNumber} updated!`
-    );
-
-    try {
-      await fetch("/api/invoices", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedInvoice),
-      });
-    } catch (err) {
-      console.error("API update error:", err);
-    }
-  };
-
   const handleDeleteInvoice = async (invoiceId: string) => {
     setInvoices((prev) => prev.filter((inv) => inv.id !== invoiceId));
     showToast(
