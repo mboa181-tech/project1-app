@@ -9,7 +9,9 @@ import { RevenueAnalytics } from "@/components/RevenueAnalytics";
 import { InvoiceTable } from "@/components/InvoiceTable";
 import { InvoiceModal } from "@/components/InvoiceModal";
 import { InvoiceDetailModal } from "@/components/InvoiceDetailModal";
+import { AuditLogDrawer, AuditEntry } from "@/components/AuditLogDrawer";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   Check,
   ShieldCheck,
@@ -19,20 +21,25 @@ import {
   Github,
   Plus,
   RefreshCw,
+  History,
 } from "lucide-react";
 
 export default function DashboardPage() {
   const { t, lang } = useLanguage();
+  const { user } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [isDark, setIsDark] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [isAuditOpen, setIsAuditOpen] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const currentUser = initialDemoUsers[currentUserIndex];
+  const actorName = user?.user_metadata?.full_name || user?.email || currentUser.name;
 
   useEffect(() => {
     if (isDark) {
@@ -72,9 +79,44 @@ export default function DashboardPage() {
 
   useEffect(() => {
     try {
+      const savedAudit = localStorage.getItem("flowdesk_audit_v1");
+      if (savedAudit) {
+        setAuditLogs(JSON.parse(savedAudit));
+      }
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
+    try {
       localStorage.setItem("flowdesk_invoices_v1", JSON.stringify(invoices));
     } catch (e) {}
   }, [invoices]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("flowdesk_audit_v1", JSON.stringify(auditLogs));
+    } catch (e) {}
+  }, [auditLogs]);
+
+  const recordAudit = (
+    action: AuditEntry["action"],
+    target: string,
+    detail: string
+  ) => {
+    const entry: AuditEntry = {
+      id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      action,
+      target,
+      detail,
+      actor: actorName,
+      timestamp: new Date().toLocaleTimeString(lang === "id" ? "id-ID" : "en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }),
+    };
+    setAuditLogs((prev) => [entry, ...prev].slice(0, 50));
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -93,6 +135,11 @@ export default function DashboardPage() {
 
   const handleCreateInvoice = async (newInvoice: Invoice) => {
     setInvoices([newInvoice, ...invoices]);
+    recordAudit(
+      "CREATE",
+      newInvoice.invoiceNumber,
+      `${newInvoice.clientName} — Rp ${newInvoice.total.toLocaleString("id-ID")}`
+    );
     showToast(
       lang === "id"
         ? `Tagihan ${newInvoice.invoiceNumber} diterbitkan! Menyinkronkan ke database...`
@@ -120,6 +167,11 @@ export default function DashboardPage() {
   const handleUpdateInvoice = async (updatedInvoice: Invoice) => {
     setInvoices((prev) =>
       prev.map((inv) => (inv.id === updatedInvoice.id ? updatedInvoice : inv))
+    );
+    recordAudit(
+      "UPDATE",
+      updatedInvoice.invoiceNumber,
+      `${updatedInvoice.clientName} — Rp ${updatedInvoice.total.toLocaleString("id-ID")}`
     );
     showToast(
       lang === "id"
@@ -154,6 +206,7 @@ export default function DashboardPage() {
     setInvoices((prev) =>
       prev.map((inv) => (inv.id === invoiceId ? { ...inv, status: nextStatus } : inv))
     );
+    recordAudit("STATUS", target.invoiceNumber, `${target.status} → ${nextStatus}`);
     showToast(
       lang === "id"
         ? `Status tagihan berhasil diubah ke ${nextStatus}.`
@@ -172,7 +225,11 @@ export default function DashboardPage() {
   };
 
   const handleDeleteInvoice = async (invoiceId: string) => {
+    const target = invoices.find((inv) => inv.id === invoiceId);
     setInvoices((prev) => prev.filter((inv) => inv.id !== invoiceId));
+    if (target) {
+      recordAudit("DELETE", target.invoiceNumber, target.clientName);
+    }
     showToast(
       lang === "id"
         ? "Tagihan dihapus dari daftar aktif."
@@ -190,6 +247,11 @@ export default function DashboardPage() {
     const target = invoices.find((inv) => inv.status === "PENDING" || inv.status === "OVERDUE");
     if (target) {
       await handleToggleStatus(target.id);
+      recordAudit(
+        "WEBHOOK",
+        target.invoiceNumber,
+        `Payment webhook settled — Rp ${target.total.toLocaleString("id-ID")}`
+      );
       showToast(
         lang === "id"
           ? `⚡ Webhook Diterima: Tagihan ${target.invoiceNumber} lunas (Rp ${target.total.toLocaleString("id-ID")})!`
@@ -241,6 +303,19 @@ export default function DashboardPage() {
 
           <div className="flex flex-wrap items-center gap-2.5">
             <button
+              onClick={() => setIsAuditOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/80 transition-all cursor-pointer shadow-sm active:scale-95"
+            >
+              <History className="w-3.5 h-3.5 text-brand-500" />
+              <span>{t("auditButton")}</span>
+              {auditLogs.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-brand-500/15 text-brand-600 dark:text-brand-400">
+                  {auditLogs.length}
+                </span>
+              )}
+            </button>
+
+            <button
               onClick={handleSimulateWebhook}
               title="Simulasikan penerimaan webhook pembayaran"
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/80 transition-all cursor-pointer shadow-sm active:scale-95"
@@ -290,6 +365,17 @@ export default function DashboardPage() {
         invoice={selectedInvoice}
         onClose={() => setSelectedInvoice(null)}
         onToggleStatus={handleToggleStatus}
+        onEdit={(inv) => {
+          setEditingInvoice(inv);
+          setIsCreateOpen(true);
+        }}
+      />
+
+      <AuditLogDrawer
+        isOpen={isAuditOpen}
+        onClose={() => setIsAuditOpen(false)}
+        entries={auditLogs}
+        onClear={() => setAuditLogs([])}
       />
 
       <footer className="relative z-10 border-t border-slate-200 dark:border-slate-800/80 py-6 text-xs text-slate-500 dark:text-slate-400 mt-auto">

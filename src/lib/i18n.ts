@@ -151,6 +151,15 @@ export const translations = {
     authSignUpSuccess: "Account created! Check your email to confirm, or sign in if confirmation is disabled.",
     authNoAccount: "Don't have an account?",
     authHaveAccount: "Already have an account?",
+
+    // Detail & Audit
+    detailEdit: "Edit",
+    detailMarkPaid: "Mark Paid",
+    auditButton: "Audit Log",
+    auditTitle: "Activity & Audit Trail",
+    auditSubtitle: "Real-time ledger of billing mutations and webhook events",
+    auditEmpty: "No activity recorded yet in this session.",
+    auditClear: "Clear Log",
   },
 
   id: {
@@ -303,5 +312,14 @@ export const translations = {
     authSignUpSuccess: "Akun berhasil dibuat! Cek email untuk konfirmasi, atau langsung masuk jika konfirmasi email nonaktif.",
     authNoAccount: "Belum punya akun?",
     authHaveAccount: "Sudah punya akun?",
+
+    // Detail & Audit
+    detailEdit: "Edit",
+    detailMarkPaid: "Tandai Lunas",
+    auditButton: "Log Audit",
+    auditTitle: "Riwayat Aktivitas & Audit",
+    auditSubtitle: "Catatan real-time perubahan tagihan dan event webhook",
+    auditEmpty: "Belum ada aktivitas tercatat pada sesi ini.",
+    auditClear: "Bersihkan Log",
   },
 };

@@ -16,18 +16,21 @@ import {
   CreditCard,
   QrCode,
   Lock,
+  Pencil,
 } from "lucide-react";
 
 interface InvoiceDetailModalProps {
   invoice: Invoice | null;
   onClose: () => void;
   onToggleStatus?: (invoiceId: string) => void;
+  onEdit?: (invoice: Invoice) => void;
 }
 
 export function InvoiceDetailModal({
   invoice,
   onClose,
   onToggleStatus,
+  onEdit,
 }: InvoiceDetailModalProps) {
   const { t, lang } = useLanguage();
   const [copied, setCopied] = useState(false);
@@ -83,7 +86,33 @@ export function InvoiceDetailModal({
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {onToggleStatus && !isPaid && (
+              <button
+                onClick={() => {
+                  onToggleStatus(invoice.id);
+                  onClose();
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors cursor-pointer"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>{t("detailMarkPaid")}</span>
+              </button>
+            )}
+
+            {onEdit && (
+              <button
+                onClick={() => {
+                  onEdit(invoice);
+                  onClose();
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                <Pencil className="w-3.5 h-3.5 text-slate-500" />
+                <span>{t("detailEdit")}</span>
+              </button>
+            )}
+
             <button
               onClick={handleCopyLink}
               title="Salin link portal pembayaran untuk klien"

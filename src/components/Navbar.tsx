@@ -214,6 +214,43 @@ export function Navbar({
           )}
         </div>
       </div>
+
+      {/* Mobile Navigation Bar */}
+      <nav className="flex md:hidden items-center justify-around gap-1 px-3 py-2 border-t border-slate-200/70 dark:border-slate-800/70 bg-slate-50/80 dark:bg-slate-900/50 text-xs font-semibold">
+        <Link
+          href="/"
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg transition-all ${
+            pathname === "/"
+              ? "bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-300 shadow-sm"
+              : "text-slate-600 dark:text-slate-400"
+          }`}
+        >
+          <FileText className="w-3.5 h-3.5" />
+          <span>{t("navInvoices")}</span>
+        </Link>
+        <Link
+          href="/clients"
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg transition-all ${
+            pathname === "/clients"
+              ? "bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-300 shadow-sm"
+              : "text-slate-600 dark:text-slate-400"
+          }`}
+        >
+          <Users className="w-3.5 h-3.5" />
+          <span>{t("navClients")}</span>
+        </Link>
+        <Link
+          href="/pay/INV-2026-002"
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg transition-all ${
+            pathname?.startsWith("/pay")
+              ? "bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-300 shadow-sm"
+              : "text-slate-600 dark:text-slate-400"
+          }`}
+        >
+          <CreditCard className="w-3.5 h-3.5" />
+          <span>{t("navPayDemo")}</span>
+        </Link>
+      </nav>
     </header>
   );
 }
