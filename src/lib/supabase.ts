@@ -1,33 +1,56 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { Invoice } from "./types";
-import { initialInvoices } from "./mock-data";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey =
+const rawUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
+const supabaseUrl = rawUrl.replace(/^["']|["']$/g, "");
+
+const rawKey = (
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
-  "";
+  ""
+).trim();
+const supabaseAnonKey = rawKey.replace(/^["']|["']$/g, "");
+
+function isValidHttpUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
     supabaseAnonKey &&
+    isValidHttpUrl(supabaseUrl) &&
     supabaseUrl !== "https://your-project.supabase.co" &&
     !supabaseUrl.includes("your-project")
 );
 
 export const supabaseDiagnostics = {
   hasUrl: Boolean(supabaseUrl),
+  isValidUrl: isValidHttpUrl(supabaseUrl),
+  urlPrefix: supabaseUrl ? supabaseUrl.slice(0, 16) : null,
   hasAnonKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
   hasPublishableKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY),
   hasPublishableDefaultKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY),
   isSupabaseConfigured,
 };
 
-// Real Supabase Client (if environment variables exist)
-export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
+// Real Supabase Client (safely initialized only when URL is valid)
+let client: SupabaseClient | null = null;
+if (isSupabaseConfigured) {
+  try {
+    client = createClient(supabaseUrl, supabaseAnonKey);
+  } catch (err) {
+    console.error("Failed to initialize Supabase client:", err);
+    client = null;
+  }
+}
+
+export const supabase = client;
 
 // Database Mapper Functions (snake_case in Postgres <-> camelCase in TypeScript)
 export function mapFromDb(row: any): Invoice {
