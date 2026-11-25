@@ -16,6 +16,14 @@ export const isSupabaseConfigured = Boolean(
     !supabaseUrl.includes("your-project")
 );
 
+export const supabaseDiagnostics = {
+  hasUrl: Boolean(supabaseUrl),
+  hasAnonKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+  hasPublishableKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY),
+  hasPublishableDefaultKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY),
+  isSupabaseConfigured,
+};
+
 // Real Supabase Client (if environment variables exist)
 export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)

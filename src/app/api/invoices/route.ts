@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase, isSupabaseConfigured, mapFromDb, mapToDb } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured, supabaseDiagnostics, mapFromDb, mapToDb } from "@/lib/supabase";
 import { initialInvoices } from "@/lib/mock-data";
 import { Invoice } from "@/lib/types";
 
@@ -8,6 +8,9 @@ let localInvoicesStore: Invoice[] = [...initialInvoices];
 
 // GET /api/invoices - Fetch all invoices
 export async function GET() {
+  let supabaseError: string | null = null;
+  let rowCount: number | null = null;
+
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase
@@ -16,19 +19,26 @@ export async function GET() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
+      rowCount = data ? data.length : 0;
       if (data && data.length > 0) {
         return NextResponse.json({
           source: "supabase",
           invoices: data.map(mapFromDb),
         });
       }
-    } catch (err) {
+    } catch (err: any) {
+      supabaseError = err?.message || String(err);
       console.error("Supabase query error:", err);
     }
   }
 
   return NextResponse.json({
     source: "local-persistent",
+    diagnostics: {
+      ...supabaseDiagnostics,
+      rowCount,
+      supabaseError,
+    },
     invoices: localInvoicesStore,
   });
 }
