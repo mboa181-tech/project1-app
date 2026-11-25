@@ -1,8 +1,11 @@
 "use client";
 
 import { useId, useState, type CSSProperties, type ReactNode, useEffect, useRef, type MouseEvent } from "react";
+import Link from "next/link";
+import { Invoice } from "@/lib/types";
+import { formatRupiah } from "@/lib/format-currency";
 
-import { ArrowDownRight, ArrowRight, ArrowUpRight, Box, CircleDollarSign, Clock3, Download, Ellipsis, Eye, Filter, ListChecks, Search, ShieldCheck, ShoppingBag, TriangleAlert, Users, Zap, ArrowDownToLine, BarChart3, Bell, BriefcaseBusiness, ChevronRight, Command, LayoutDashboard, Moon, Sun, TrendingUp, X } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, Box, CircleDollarSign, Clock3, Download, Ellipsis, Eye, Filter, ListChecks, Search, ShieldCheck, ShoppingBag, TriangleAlert, Users, Zap, ArrowDownToLine, BarChart3, Bell, BriefcaseBusiness, ChevronRight, Command, LayoutDashboard, Moon, Sun, TrendingUp, X, Plus, Pencil, Trash2, History, LogIn, LogOut, FileText } from "lucide-react";
 
 import { useGSAP } from "@gsap/react";
 
@@ -24,6 +27,18 @@ export interface GlassyDashboardProps {
   workspaceName?: string;
   panelFrost?: number;
   initialTheme?: "light" | "dark";
+  invoices?: Invoice[];
+  onCreateInvoice?: () => void;
+  onViewInvoice?: (invoice: Invoice) => void;
+  onEditInvoice?: (invoice: Invoice) => void;
+  onToggleStatus?: (invoiceId: string) => void;
+  onDeleteInvoice?: (invoiceId: string) => void;
+  onSimulateWebhook?: () => void;
+  onOpenAuditLog?: () => void;
+  auditCount?: number;
+  userLabel?: string;
+  isAuthenticated?: boolean;
+  onSignOut?: () => void;
 }
 
 const studioPhoto = "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80";
@@ -655,15 +670,22 @@ const recentActivity = [
 const number = new Intl.NumberFormat("en-US");
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format;
 const usdCompact = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 1 }).format;
+const idrCompact = (value: number) => {
+  if (Math.abs(value) >= 1_000_000_000) return `Rp ${(value / 1_000_000_000).toFixed(1)} M`;
+  if (Math.abs(value) >= 1_000_000) return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
+  return formatRupiah(Math.round(value));
+};
 
 type ChartTone = "coral" | "ink" | "teal" | "ochre";
-type CountFormat = "number" | "usd" | "compact" | "percent";
+type CountFormat = "number" | "usd" | "compact" | "percent" | "idr" | "idrCompact";
 
 const formatCount: Record<CountFormat, (value: number) => string> = {
   number: value => number.format(Math.round(value)),
   usd,
   compact: usdCompact,
   percent: value => `${value.toFixed(1)}%`,
+  idr: value => formatRupiah(Math.round(value)),
+  idrCompact,
 };
 
 function Counter({ value, format = "number" }: { value: number; format?: CountFormat }) {
@@ -873,9 +895,154 @@ function Metric({ title, icon, value, format, change, detail, tone }: MetricProp
 }
 
 function Badge({ status }: { status: string }) {
-  const color = status === "Complete" || status === "Running" ? "teal"
-    : status === "Needs review" || status === "Exceptions" ? "coral" : "ink";
+  const color = status === "Complete" || status === "Running" || status === "PAID" || status === "Lunas" ? "teal"
+    : status === "Needs review" || status === "Exceptions" || status === "OVERDUE" || status === "Jatuh Tempo" ? "coral" : "ink";
   return <span className="gd-status" data-state={color}><i aria-hidden="true" />{status}</span>;
+}
+
+const invoiceStatusLabel: Record<Invoice["status"], string> = {
+  PAID: "Lunas",
+  PENDING: "Tertunda",
+  OVERDUE: "Jatuh Tempo",
+  DRAFT: "Draf",
+};
+
+function InvoiceLedger({
+  invoices,
+  onViewInvoice,
+  onEditInvoice,
+  onToggleStatus,
+  onDeleteInvoice,
+}: {
+  invoices: Invoice[];
+  onViewInvoice?: (inv: Invoice) => void;
+  onEditInvoice?: (inv: Invoice) => void;
+  onToggleStatus?: (id: string) => void;
+  onDeleteInvoice?: (id: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("ALL");
+  const show = invoices.filter(
+    (inv) =>
+      [inv.invoiceNumber, inv.clientName, inv.clientEmail, inv.status]
+        .join(" ")
+        .toLowerCase()
+        .includes(query.trim().toLowerCase()) &&
+      (status === "ALL" || inv.status === status)
+  );
+
+  return (
+    <Panel
+      title="Daftar Tagihan & Invoice"
+      subtitle="Klik badge status untuk mengubah status secara langsung"
+      className="gd-activity"
+      action={
+        <div className="gd-table-tools">
+          <label className="gd-search">
+            <Search aria-hidden="true" />
+            <input
+              type="search"
+              placeholder="Cari invoice / klien..."
+              aria-label="Cari invoice"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </label>
+          <label className="gd-filter">
+            <Filter aria-hidden="true" />
+            <select
+              aria-label="Filter status invoice"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option value="ALL">Semua Status</option>
+              <option value="PAID">Lunas</option>
+              <option value="PENDING">Tertunda</option>
+              <option value="OVERDUE">Jatuh Tempo</option>
+              <option value="DRAFT">Draf</option>
+            </select>
+          </label>
+        </div>
+      }
+    >
+      <div className="gd-table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">No. Invoice</th>
+              <th scope="col">Klien</th>
+              <th scope="col">Jatuh Tempo</th>
+              <th scope="col">Total</th>
+              <th scope="col">Status</th>
+              <th scope="col">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {show.map((inv) => (
+              <tr key={inv.id}>
+                <td>{inv.invoiceNumber}</td>
+                <td>{inv.clientName}</td>
+                <td>{inv.dueDate}</td>
+                <td>{formatRupiah(inv.total)}</td>
+                <td>
+                  <button
+                    type="button"
+                    onClick={() => onToggleStatus?.(inv.id)}
+                    title="Klik untuk ubah status"
+                    style={{ background: "transparent", border: 0, padding: 0 }}
+                  >
+                    <Badge status={invoiceStatusLabel[inv.status]} />
+                  </button>
+                </td>
+                <td>
+                  <div style={{ display: "inline-flex", gap: "6px", alignItems: "center" }}>
+                    {onViewInvoice && (
+                      <button
+                        type="button"
+                        onClick={() => onViewInvoice(inv)}
+                        title="Pratinjau Invoice"
+                        className="gd-secondary"
+                        style={{ minBlockSize: "28px", padding: "3px 8px", fontSize: "10.5px" }}
+                      >
+                        <Eye style={{ width: 12, height: 12 }} />
+                      </button>
+                    )}
+                    {onEditInvoice && (
+                      <button
+                        type="button"
+                        onClick={() => onEditInvoice(inv)}
+                        title="Edit Invoice"
+                        className="gd-secondary"
+                        style={{ minBlockSize: "28px", padding: "3px 8px", fontSize: "10.5px" }}
+                      >
+                        <Pencil style={{ width: 12, height: 12 }} />
+                      </button>
+                    )}
+                    {onDeleteInvoice && (
+                      <button
+                        type="button"
+                        onClick={() => onDeleteInvoice(inv.id)}
+                        title="Hapus Invoice"
+                        className="gd-secondary"
+                        style={{ minBlockSize: "28px", padding: "3px 8px", fontSize: "10.5px", color: "var(--gd-coral)" }}
+                      >
+                        <Trash2 style={{ width: 12, height: 12 }} />
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {show.length === 0 && (
+        <p className="gd-empty" role="status">
+          Tidak ada tagihan yang cocok.
+        </p>
+      )}
+    </Panel>
+  );
 }
 
 function Activity() {
@@ -901,7 +1068,151 @@ function Activity() {
   </Panel>;
 }
 
-function CommandView({ period, open }: { period: Period; open: (view: View) => void }) {
+function CommandView({
+  period,
+  open,
+  invoices,
+  onCreateInvoice,
+  onViewInvoice,
+  onEditInvoice,
+  onToggleStatus,
+  onDeleteInvoice,
+  onSimulateWebhook,
+}: {
+  period: Period;
+  open: (view: View) => void;
+  invoices?: Invoice[];
+  onCreateInvoice?: () => void;
+  onViewInvoice?: (inv: Invoice) => void;
+  onEditInvoice?: (inv: Invoice) => void;
+  onToggleStatus?: (id: string) => void;
+  onDeleteInvoice?: (id: string) => void;
+  onSimulateWebhook?: () => void;
+}) {
+  if (invoices) {
+    const paidInvoices = invoices.filter((i) => i.status === "PAID");
+    const pendingInvoices = invoices.filter((i) => i.status === "PENDING");
+    const overdueInvoices = invoices.filter((i) => i.status === "OVERDUE");
+    const totalPaid = paidInvoices.reduce((s, i) => s + i.total, 0);
+    const totalPending = pendingInvoices.reduce((s, i) => s + i.total, 0);
+    const totalOverdue = overdueInvoices.reduce((s, i) => s + i.total, 0);
+    const totalAll = invoices.reduce((s, i) => s + i.total, 0);
+    const collectionRate = invoices.length > 0 ? (paidInvoices.length / invoices.length) * 100 : 0;
+
+    return (
+      <div className="gd-command-grid">
+        <Panel title="Pendapatan Lunas" className="gd-balance" action={<span className="gd-unit">IDR</span>}>
+          <div className="gd-balance-number" style={{ fontSize: "clamp(24px, 2.8vw, 42px)" }}>
+            <Counter value={totalPaid} format="idr" />
+          </div>
+          <div className="gd-balance-change">
+            <span className="gd-delta">
+              <ArrowUpRight aria-hidden="true" />
+              {paidInvoices.length} / {invoices.length} Lunas
+            </span>
+            <span>terverifikasi di Supabase</span>
+          </div>
+          <div className="gd-balance-actions">
+            {onCreateInvoice ? (
+              <button type="button" className="gd-primary" onClick={onCreateInvoice}>
+                <Plus aria-hidden="true" /> Buat Tagihan
+              </button>
+            ) : (
+              <button type="button" className="gd-primary" onClick={() => open("trends")}>
+                Analitik <ArrowUpRight aria-hidden="true" />
+              </button>
+            )}
+            {onSimulateWebhook ? (
+              <button type="button" className="gd-secondary" onClick={onSimulateWebhook}>
+                <Zap aria-hidden="true" /> Simulasi Webhook
+              </button>
+            ) : (
+              <button type="button" className="gd-secondary" onClick={() => open("metrics")}>
+                Metrik <ArrowRight aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          <div className="gd-streams" aria-label="Rincian Tagihan">
+            <div>
+              <span>Lunas</span>
+              <strong>{idrCompact(totalPaid)}</strong>
+            </div>
+            <div>
+              <span>Tertunda</span>
+              <strong>{idrCompact(totalPending)}</strong>
+            </div>
+            <div>
+              <span>Jatuh Tempo</span>
+              <strong>{idrCompact(totalOverdue)}</strong>
+            </div>
+          </div>
+        </Panel>
+
+        <div className="gd-summary">
+          <Metric title="Pendapatan Lunas" icon={<CircleDollarSign />} value={totalPaid} format="idrCompact" detail={`${paidInvoices.length} tagihan lunas`} tone="teal" />
+          <Metric title="Tagihan Tertunda" icon={<Clock3 />} value={totalPending} format="idrCompact" detail={`${pendingInvoices.length} menunggu bayar`} />
+          <Metric title="Jatuh Tempo" icon={<TriangleAlert />} value={totalOverdue} format="idrCompact" detail={`${overdueInvoices.length} perlu ditagih`} tone="coral" />
+          <Metric title="Pelunasan" icon={<ListChecks />} value={collectionRate} format="percent" detail={`${paidInvoices.length} dari ${invoices.length} invoice`} />
+        </div>
+
+        <Panel title="Komposisi Invoice" subtitle="Subtotal vs Pajak PPN 11% per tagihan" className="gd-command-chart">
+          <StackChart
+            items={invoices.slice(0, 7).map((inv) => ({
+              label: inv.invoiceNumber.replace("INV-2026-", "#"),
+              lower: inv.subtotal,
+              upper: inv.taxAmount,
+            }))}
+            labels={["Subtotal", "PPN"]}
+            tones={["ink", "teal"]}
+            format={idrCompact}
+            title="Komposisi Subtotal dan PPN per invoice"
+          />
+        </Panel>
+
+        <div className="gd-command-side">
+          <Panel title="Target Pelunasan" className="gd-capacity">
+            <div
+              className="gd-capacity-track"
+              role="meter"
+              aria-label="Persentase pelunasan tagihan"
+              aria-valuenow={Math.round(totalPaid)}
+              aria-valuemin={0}
+              aria-valuemax={Math.max(1, Math.round(totalAll))}
+            >
+              <span className="gd-fill" style={{ width: `${totalAll > 0 ? (totalPaid / totalAll) * 100 : 0}%` }} />
+            </div>
+            <div className="gd-capacity-label">
+              <span><strong>{idrCompact(totalPaid)}</strong> lunas</span>
+              <span>dari {idrCompact(totalAll)}</span>
+            </div>
+          </Panel>
+          <Panel title="CRM & Portal Bayar" subtitle="Kelola klien & link pembayaran" className="gd-approvals">
+            <div className="gd-approval-content">
+              <span className="gd-list-icon">
+                <Users aria-hidden="true" />
+              </span>
+              <div>
+                <strong>Direktori Klien & LTV</strong>
+                <small>Lihat profil akun & portal bayar</small>
+              </div>
+              <Link href="/clients" className="gd-icon-button" aria-label="Buka CRM Klien">
+                <ArrowUpRight aria-hidden="true" />
+              </Link>
+            </div>
+          </Panel>
+        </div>
+
+        <InvoiceLedger
+          invoices={invoices}
+          onViewInvoice={onViewInvoice}
+          onEditInvoice={onEditInvoice}
+          onToggleStatus={onToggleStatus}
+          onDeleteInvoice={onDeleteInvoice}
+        />
+      </div>
+    );
+  }
+
   const stats = analytics[period];
   const streams = [{ label: "Subscriptions", ratio: .686 }, { label: "Services", ratio: .208 }, { label: "Add-ons", ratio: .106 }];
   const sources = streams.map(({ label, ratio }) => ({ label, value: Math.round(stats.revenue * ratio) }));
@@ -962,11 +1273,84 @@ function AnalyticsMetrics({ period, trend }: { period: Period; trend?: boolean }
   </div>;
 }
 
-function AnalyticsView({ period, type, download }: {
+function AnalyticsView({ period, type, download, invoices, onViewInvoice, onEditInvoice, onToggleStatus, onDeleteInvoice }: {
   period: Period;
   type: "trends" | "metrics";
   download: () => void;
+  invoices?: Invoice[];
+  onViewInvoice?: (inv: Invoice) => void;
+  onEditInvoice?: (inv: Invoice) => void;
+  onToggleStatus?: (id: string) => void;
+  onDeleteInvoice?: (id: string) => void;
 }) {
+  if (invoices) {
+    const trend = type === "trends";
+    const totalAll = invoices.reduce((s, i) => s + i.total, 0);
+    const totalPaid = invoices.filter((i) => i.status === "PAID").reduce((s, i) => s + i.total, 0);
+    const totalTax = invoices.reduce((s, i) => s + i.taxAmount, 0);
+    const avgInvoice = invoices.length > 0 ? totalAll / invoices.length : 0;
+
+    const paidPct = invoices.length > 0 ? Math.round((invoices.filter((i) => i.status === "PAID").length / invoices.length) * 100) : 0;
+    const pendingPct = invoices.length > 0 ? Math.round((invoices.filter((i) => i.status === "PENDING").length / invoices.length) * 100) : 0;
+    const otherPct = Math.max(0, 100 - paidPct - pendingPct);
+
+    return (
+      <div className="gd-analytics">
+        <div className="gd-metric-grid">
+          <Metric title="Total Tagihan" icon={<CircleDollarSign />} value={totalAll} format="idrCompact" detail={`${invoices.length} invoice`} tone="teal" />
+          <Metric title="Pendapatan Lunas" icon={<ShieldCheck />} value={totalPaid} format="idrCompact" detail="sudah terverifikasi" />
+          <Metric title="Total PPN (11%)" icon={<Box />} value={totalTax} format="idrCompact" detail="akumulasi pajak" />
+          <Metric title="Rata-rata Invoice" icon={<BarChart3 />} value={avgInvoice} format="idrCompact" detail="per kontrak" />
+        </div>
+        <div className="gd-analytics-grid">
+          <Panel
+            title={trend ? "Nilai Tagihan per Invoice (Rp)" : "Rincian Subtotal & Pajak"}
+            subtitle="Perbandingan nilai tagihan berdasarkan data real Supabase"
+          >
+            <StackChart
+              title="Nilai tagihan per invoice"
+              labels={["Subtotal", "PPN 11%"]}
+              tones={["ink", "coral"]}
+              format={idrCompact}
+              items={invoices.slice(0, 8).map((inv) => ({
+                label: inv.invoiceNumber.replace("INV-2026-", "#"),
+                lower: inv.subtotal,
+                upper: inv.taxAmount,
+              }))}
+            />
+          </Panel>
+          <Panel title="Distribusi Status" className="gd-device-panel">
+            <DeviceChart mix={[paidPct, pendingPct, otherPct]} visitors={invoices.length} />
+          </Panel>
+        </div>
+        {trend ? (
+          <Panel title="Ekspor Laporan Keuangan" className="gd-statement">
+            <div className="gd-approval-content">
+              <span className="gd-list-icon">
+                <Clock3 aria-hidden="true" />
+              </span>
+              <div>
+                <strong>Laporan Tagihan FlowDesk (IDR)</strong>
+                <small>{invoices.length} tagihan aktif · Unduh format CSV</small>
+              </div>
+              <button type="button" className="gd-icon-button" aria-label="Unduh CSV" onClick={download}>
+                <Download aria-hidden="true" />
+              </button>
+            </div>
+          </Panel>
+        ) : (
+          <InvoiceLedger
+            invoices={invoices}
+            onViewInvoice={onViewInvoice}
+            onEditInvoice={onEditInvoice}
+            onToggleStatus={onToggleStatus}
+            onDeleteInvoice={onDeleteInvoice}
+          />
+        )}
+      </div>
+    );
+  }
+
   const stats = analytics[period];
   const trend = type === "trends";
   return <div className="gd-analytics">
@@ -1003,8 +1387,80 @@ const statusStyle: Record<WorkStatus, { icon: ReactNode; tone: "teal" | "coral" 
   "Exceptions": { icon: <TriangleAlert />, tone: "ink" },
 };
 
-function OperationsView({ work, inspect }: { work: WorkItem[]; inspect: (item: WorkItem) => void }) {
+const invoiceLaneOrder: { status: Invoice["status"]; label: string; icon: ReactNode; tone: "teal" | "coral" | "ochre" | "ink" }[] = [
+  { status: "DRAFT", label: "Draf", icon: <FileText />, tone: "ink" },
+  { status: "PENDING", label: "Tertunda", icon: <Clock3 />, tone: "ochre" },
+  { status: "OVERDUE", label: "Jatuh Tempo", icon: <TriangleAlert />, tone: "coral" },
+  { status: "PAID", label: "Lunas", icon: <ShieldCheck />, tone: "teal" },
+];
+
+function OperationsView({
+  work,
+  inspect,
+  invoices,
+  onViewInvoice,
+}: {
+  work: WorkItem[];
+  inspect: (item: WorkItem) => void;
+  invoices?: Invoice[];
+  onViewInvoice?: (inv: Invoice) => void;
+}) {
   const [filter, setFilter] = useState<WorkStatus | "All lanes">("All lanes");
+
+  if (invoices) {
+    const totalAll = invoices.reduce((s, i) => s + i.total, 0);
+    const overdueCount = invoices.filter((i) => i.status === "OVERDUE").length;
+    const pendingCount = invoices.filter((i) => i.status === "PENDING").length;
+    const paidCount = invoices.filter((i) => i.status === "PAID").length;
+
+    return (
+      <div className="gd-analytics">
+        <div className="gd-metric-grid">
+          <Metric title="Total Portofolio" icon={<CircleDollarSign />} value={totalAll} format="idrCompact" detail="semua tagihan" tone="teal" />
+          <Metric title="Total Invoice" icon={<Zap />} value={invoices.length} detail="dalam pipeline" />
+          <Metric title="Perlu Tindak Lanjut" icon={<ListChecks />} value={overdueCount + pendingCount} detail="tertunda & jatuh tempo" />
+          <Metric title="Sudah Lunas" icon={<ShieldCheck />} value={paidCount} detail="terverifikasi" />
+        </div>
+        <Panel title="Papan Status Invoice (Kanban)" subtitle="Klik kartu invoice untuk membuka pratinjau, cetak PDF, atau tandai lunas." className="gd-board">
+          <div className="gd-lanes">
+            {invoiceLaneOrder.map((lane) => {
+              const items = invoices.filter((inv) => inv.status === lane.status);
+              return (
+                <section className="gd-lane" key={lane.status} aria-label={lane.label}>
+                  <header>
+                    <i data-tone={lane.tone} aria-hidden="true">{lane.icon}</i>
+                    <h3>{lane.label}</h3>
+                    <span>{items.length}</span>
+                  </header>
+                  {items.map((inv) => (
+                    <button
+                      className="gd-work-item"
+                      type="button"
+                      onClick={() => onViewInvoice?.(inv)}
+                      key={inv.id}
+                    >
+                      <span className="gd-work-titlerow">
+                        <strong>{inv.invoiceNumber}</strong>
+                        <Ellipsis aria-hidden="true" />
+                      </span>
+                      <span className="gd-work-detail">
+                        {inv.clientName} · {formatRupiah(inv.total)}
+                      </span>
+                      <span className="gd-work-meta">
+                        <span>Due: {inv.dueDate}</span>
+                        <span>{inv.items.length} item</span>
+                      </span>
+                    </button>
+                  ))}
+                  {items.length === 0 && <p className="gd-empty">Kosong.</p>}
+                </section>
+              );
+            })}
+          </div>
+        </Panel>
+      </div>
+    );
+  }
   const review = work.filter(item => item.status === "Needs review").length;
   const tools = new Set(work.map(item => item.tool)).size;
   const lanes = filter === "All lanes" ? workStatuses : [filter];
@@ -1169,6 +1625,18 @@ function GlassyDashboard({
   workspaceName = "ATLAS",
   panelFrost = 12,
   initialTheme = "light",
+  invoices,
+  onCreateInvoice,
+  onViewInvoice,
+  onEditInvoice,
+  onToggleStatus,
+  onDeleteInvoice,
+  onSimulateWebhook,
+  onOpenAuditLog,
+  auditCount = 0,
+  userLabel,
+  isAuthenticated,
+  onSignOut,
 }: GlassyDashboardProps = {}) {
   const [view, setView] = useState<View>(routeFromHash);
   const [active, setActive] = useState(view);
@@ -1253,20 +1721,34 @@ function GlassyDashboard({
 
   const current = views.find(item => item.id === view)!;
   const workItem = typeof modal === "object" && modal ? work.find(item => item.id === modal.itemId) : undefined;
-  const reviewCount = work.filter(item => item.status === "Needs review").length;
+  const overdueOrPendingInvoices = invoices ? invoices.filter(i => i.status === "OVERDUE" || i.status === "PENDING") : [];
+  const reviewCount = invoices ? overdueOrPendingInvoices.length : work.filter(item => item.status === "Needs review").length;
   const close = () => setModal(null);
   const inspect = (item: WorkItem) => setModal({ itemId: item.id });
   const downloadReport = () => {
+    if (invoices) {
+      saveCsv("flowdesk-invoices.csv", [
+        ["Invoice Number", "Client", "Email", "Issue Date", "Due Date", "Status", "Subtotal (IDR)", "Tax (IDR)", "Total (IDR)"],
+        ...invoices.map(i => [i.invoiceNumber, i.clientName, i.clientEmail, i.issueDate, i.dueDate, i.status, i.subtotal, i.taxAmount, i.total]),
+      ]);
+      return;
+    }
     const stats = analytics[period];
     saveCsv(`atlas-trends-${period.replace(" ", "-")}.csv`, [
       ["Period ending", "Revenue (USD)", "Operating costs (USD)"],
       ...stats.axis.map((label, index) => [label, Math.round(stats.collected[index] * 1000), Math.round(stats.costs[index] * 1000)]),
     ]);
   };
-  const downloadWork = () => saveCsv("atlas-operations.csv", [
-    ["ID", "Workflow", "System", "Owner", "Status", "Time"],
-    ...work.map(item => [item.id, item.name, item.tool, item.owner, item.status, item.timestamp]),
-  ]);
+  const downloadWork = () => {
+    if (invoices) {
+      downloadReport();
+      return;
+    }
+    saveCsv("atlas-operations.csv", [
+      ["ID", "Workflow", "System", "Owner", "Status", "Time"],
+      ...work.map(item => [item.id, item.name, item.tool, item.owner, item.status, item.timestamp]),
+    ]);
+  };
 
   return <div className="gd-app" data-theme={theme} ref={root} style={{ "--gd-panel-frost": Math.max(0, Math.min(36, panelFrost)) + "px" } as CSSProperties}>
     <style>{dashboardStyles}</style>
@@ -1274,11 +1756,31 @@ function GlassyDashboard({
     <div className="gd-surround">
       <header className="gd-top">
         <div className="gd-brand"><span className="gd-logo" aria-hidden="true"><svg viewBox="0 0 28 28" fill="none"><path d="m5 22 7.4-16h3.2L23 22h-4l-5-11.4L9 22H5Z" fill="currentColor"/><path d="M10 18h8l1.4 3h-10.8l1.4-3Z" fill="currentColor"/></svg></span>
-          <div><strong>{workspaceName}</strong><small>Workspace</small></div></div>
+          <div><strong>{workspaceName}</strong><small>{invoices ? (userLabel || "Financial Ops") : "Workspace"}</small></div></div>
         <button type="button" className="gd-ask" aria-label={"Search " + workspaceName + " views"} onClick={() => setModal("search")}>
           <span className="gd-orb" aria-hidden="true" /><span className="gd-prompt" key={view}>{current.prompt}</span><Search aria-hidden="true" className="gd-ask-search" />
         </button>
         <div className="gd-top-actions">
+          {onCreateInvoice && (
+            <button type="button" className="gd-primary" onClick={onCreateInvoice} style={{ minBlockSize: "40px", padding: "0 13px" }}>
+              <Plus aria-hidden="true" /> <span className="hidden sm:inline">Buat Tagihan</span>
+            </button>
+          )}
+          {onOpenAuditLog && (
+            <button type="button" className="gd-icon-button" title="Log Audit" aria-label="Log Audit" onClick={onOpenAuditLog}>
+              <History aria-hidden="true" />
+              {auditCount > 0 && (
+                <span style={{ position: "absolute", top: 4, right: 4, fontSize: 9, fontWeight: 800, background: "var(--gd-teal)", color: "#fff", borderRadius: 999, padding: "1px 4px", lineHeight: 1.1 }}>
+                  {auditCount}
+                </span>
+              )}
+            </button>
+          )}
+          {invoices && (
+            <Link href="/clients" className="gd-icon-button" title="CRM Klien" aria-label="CRM Klien">
+              <Users aria-hidden="true" />
+            </Link>
+          )}
           <button title={theme === "light" ? "Switch to dark theme" : "Switch to light theme"} type="button" className="gd-icon-button"
             aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"} onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
             {theme === "light" ? <Moon aria-hidden="true" /> : <Sun aria-hidden="true" />}
@@ -1286,6 +1788,17 @@ function GlassyDashboard({
           <button type="button" className="gd-icon-button gd-notices" aria-label="Notifications" onClick={() => { setReadNotices(true); setModal("notifications"); }}>
             <Bell aria-hidden="true" />{!readNotices && reviewCount > 0 && <i aria-hidden="true" />}
           </button>
+          {invoices && (
+            isAuthenticated ? (
+              <button type="button" className="gd-icon-button" title="Keluar (Sign Out)" aria-label="Keluar" onClick={onSignOut}>
+                <LogOut aria-hidden="true" />
+              </button>
+            ) : (
+              <Link href="/login" className="gd-icon-button" title="Masuk dengan Supabase Auth" aria-label="Masuk">
+                <LogIn aria-hidden="true" />
+              </Link>
+            )
+          )}
         </div>
       </header>
 
@@ -1299,36 +1812,84 @@ function GlassyDashboard({
                 <p>{current.description}</p>
               </div>
               <div className="gd-view-actions">
-                {view !== "operations" && <div className="gd-period" role="group" aria-label="Reporting period">
+                {view !== "operations" && !invoices && <div className="gd-period" role="group" aria-label="Reporting period">
                   {periods.map(item => <button type="button" key={item} aria-pressed={item === period} onClick={() => setPeriod(item)}>{item}</button>)}
                 </div>}
-                {(view === "operations" || view === "trends") && <button type="button" className="gd-primary gd-export" onClick={view === "operations" ? downloadWork : downloadReport}>
+                {(view === "operations" || view === "trends" || invoices) && <button type="button" className="gd-primary gd-export" onClick={view === "operations" ? downloadWork : downloadReport}>
                   <ArrowDownToLine aria-hidden="true" />Export CSV
                 </button>}
               </div>
             </header>
             <div className="gd-content" ref={content} key={view} data-view={view}>
-              {view === "command" && <CommandView period={period} open={selectView} />}
-              {(view === "trends" || view === "metrics") && <AnalyticsView period={period} type={view} download={downloadReport} />}
-              {view === "operations" && <OperationsView work={work} inspect={inspect} />}
+              {view === "command" && (
+                <CommandView
+                  period={period}
+                  open={selectView}
+                  invoices={invoices}
+                  onCreateInvoice={onCreateInvoice}
+                  onViewInvoice={onViewInvoice}
+                  onEditInvoice={onEditInvoice}
+                  onToggleStatus={onToggleStatus}
+                  onDeleteInvoice={onDeleteInvoice}
+                  onSimulateWebhook={onSimulateWebhook}
+                />
+              )}
+              {(view === "trends" || view === "metrics") && (
+                <AnalyticsView
+                  period={period}
+                  type={view}
+                  download={downloadReport}
+                  invoices={invoices}
+                  onViewInvoice={onViewInvoice}
+                  onEditInvoice={onEditInvoice}
+                  onToggleStatus={onToggleStatus}
+                  onDeleteInvoice={onDeleteInvoice}
+                />
+              )}
+              {view === "operations" && (
+                <OperationsView
+                  work={work}
+                  inspect={inspect}
+                  invoices={invoices}
+                  onViewInvoice={onViewInvoice}
+                />
+              )}
             </div>
           </div>
         </main>
         <Dock active={active} select={selectView} />
       </div>
-      <footer className="gd-footer"><span>Sample workspace</span>{backgroundCredit &&
+      <footer className="gd-footer"><span>{invoices ? "FlowDesk Operations · Next.js 15 & Supabase PostgreSQL" : "Sample workspace"}</span>{backgroundCredit &&
         <a href={backgroundCredit.href} target="_blank" rel="noreferrer">{backgroundCredit.label}<ArrowUpRight aria-hidden="true" /></a>}
       </footer>
     </div>
 
     {modal === "search" && <QuickActions workspaceName={workspaceName} select={selectView} close={close} />}
-    {modal === "notifications" && <Dialog title="Notifications" close={close}>
+    {modal === "notifications" && <Dialog title={invoices ? "Tagihan Perlu Perhatian" : "Notifications"} close={close}>
       <div className="gd-quick-list">
-        {work.filter(item => item.status === "Needs review").map(item => <button type="button" key={item.id}
-          onClick={() => { selectView("operations"); inspect(item); }}>
-          <Bell aria-hidden="true" /><div><strong>{item.name}</strong><small>{item.description}</small></div><ArrowRight aria-hidden="true" />
-        </button>)}
-        {reviewCount === 0 && <p className="gd-empty">You’re all caught up.</p>}
+        {invoices ? (
+          <>
+            {overdueOrPendingInvoices.map(inv => (
+              <button type="button" key={inv.id} onClick={() => { close(); onViewInvoice?.(inv); }}>
+                <Bell aria-hidden="true" />
+                <div>
+                  <strong>{inv.invoiceNumber} · {inv.clientName}</strong>
+                  <small>{invoiceStatusLabel[inv.status]} — {formatRupiah(inv.total)} (Due: {inv.dueDate})</small>
+                </div>
+                <ArrowRight aria-hidden="true" />
+              </button>
+            ))}
+            {overdueOrPendingInvoices.length === 0 && <p className="gd-empty">Semua tagihan sudah lunas.</p>}
+          </>
+        ) : (
+          <>
+            {work.filter(item => item.status === "Needs review").map(item => <button type="button" key={item.id}
+              onClick={() => { selectView("operations"); inspect(item); }}>
+              <Bell aria-hidden="true" /><div><strong>{item.name}</strong><small>{item.description}</small></div><ArrowRight aria-hidden="true" />
+            </button>)}
+            {reviewCount === 0 && <p className="gd-empty">You’re all caught up.</p>}
+          </>
+        )}
       </div>
     </Dialog>}
     {workItem && <Dialog key={workItem.id} title={workItem.name} close={close}>
