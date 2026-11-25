@@ -5,6 +5,7 @@ import { Invoice, DemoUser } from "@/lib/types";
 import { initialInvoices, initialDemoUsers } from "@/lib/mock-data";
 import { Navbar } from "@/components/Navbar";
 import { InvoiceModal } from "@/components/InvoiceModal";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   Users,
   Search,
@@ -33,6 +34,7 @@ interface ClientRecord {
 }
 
 export default function ClientsPage() {
+  const { t, lang } = useLanguage();
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [isDark, setIsDark] = useState(true);
@@ -42,7 +44,6 @@ export default function ClientsPage() {
 
   const currentUser = initialDemoUsers[currentUserIndex];
 
-  // Dark mode effect
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add("dark");
@@ -51,7 +52,6 @@ export default function ClientsPage() {
     }
   }, [isDark]);
 
-  // Load invoices from API
   useEffect(() => {
     async function fetchInvoices() {
       try {
@@ -75,7 +75,11 @@ export default function ClientsPage() {
   const handleSwitchUser = () => {
     const nextIdx = (currentUserIndex + 1) % initialDemoUsers.length;
     setCurrentUserIndex(nextIdx);
-    showToast(`Switched workspace to ${initialDemoUsers[nextIdx].name}`);
+    showToast(
+      lang === "id"
+        ? `Beralih ke konteks ${initialDemoUsers[nextIdx].name}`
+        : `Switched workspace to ${initialDemoUsers[nextIdx].name}`
+    );
   };
 
   const handleCreateInvoice = (newInvoice: Invoice) => {
@@ -83,7 +87,6 @@ export default function ClientsPage() {
     showToast(`Invoice ${newInvoice.invoiceNumber} recorded!`);
   };
 
-  // Aggregate distinct clients from invoices
   const clientsMap: { [email: string]: ClientRecord } = {};
 
   invoices.forEach((inv) => {
@@ -118,7 +121,6 @@ export default function ClientsPage() {
 
   return (
     <div className="relative min-h-screen flex flex-col transition-colors duration-200">
-      {/* Ambient background glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[360px] bg-gradient-to-b from-brand-500/10 via-purple-500/5 to-transparent blur-[120px] pointer-events-none rounded-full" />
 
       <Navbar
@@ -129,7 +131,6 @@ export default function ClientsPage() {
         onOpenCreateModal={() => setIsCreateOpen(true)}
       />
 
-      {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-2xl border border-slate-700/50 dark:border-slate-200 text-xs font-semibold animate-bounce">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600" />
@@ -137,9 +138,7 @@ export default function ClientsPage() {
         </div>
       )}
 
-      {/* Main Container */}
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -149,10 +148,10 @@ export default function ClientsPage() {
               <span className="text-xs text-slate-400">• Relationship Operations</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-              Corporate Accounts & Clients
+              {t("crmTitle")}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Track lifetime value, receivables, settlement history, and contact metadata.
+              {t("crmSubtitle")}
             </p>
           </div>
 
@@ -162,7 +161,7 @@ export default function ClientsPage() {
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs shadow-md shadow-brand-600/25 transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>Issue New Invoice</span>
+              <span>{t("navNewInvoice")}</span>
             </button>
           </div>
         </div>
@@ -171,32 +170,38 @@ export default function ClientsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="p-5 rounded-2xl bg-white dark:bg-[#0e1424] border border-slate-200/90 dark:border-slate-800/90 shadow-sm">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-              Total Active Accounts
+              {t("crmTotalAccounts")}
             </span>
             <div className="text-3xl font-black tracking-tight text-slate-900 dark:text-white font-mono">
               {totalClients}
             </div>
-            <p className="text-xs text-slate-400 mt-1">Verified enterprise contracts</p>
+            <p className="text-xs text-slate-400 mt-1">
+              {lang === "id" ? "Kontrak korporat terverifikasi" : "Verified enterprise contracts"}
+            </p>
           </div>
 
           <div className="p-5 rounded-2xl bg-white dark:bg-[#0e1424] border border-slate-200/90 dark:border-slate-800/90 shadow-sm">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-              Average Lifetime Value (LTV)
+              {t("crmAvgLtv")}
             </span>
             <div className="text-3xl font-black tracking-tight text-brand-600 dark:text-brand-400 font-mono">
               ${avgLtv.toLocaleString()}
             </div>
-            <p className="text-xs text-slate-400 mt-1">Weighted cumulative spend</p>
+            <p className="text-xs text-slate-400 mt-1">
+              {lang === "id" ? "Rata-rata akumulasi pengeluaran" : "Weighted cumulative spend"}
+            </p>
           </div>
 
           <div className="p-5 rounded-2xl bg-white dark:bg-[#0e1424] border border-slate-200/90 dark:border-slate-800/90 shadow-sm">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">
-              Portfolio Cumulative Invoiced
+              {t("crmGrossInvoiced")}
             </span>
             <div className="text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 font-mono">
               ${totalBilledAll.toLocaleString()}
             </div>
-            <p className="text-xs text-slate-400 mt-1">Gross contracts executed</p>
+            <p className="text-xs text-slate-400 mt-1">
+              {lang === "id" ? "Total kontrak yang dieksekusi" : "Gross contracts executed"}
+            </p>
           </div>
         </div>
 
@@ -205,7 +210,7 @@ export default function ClientsPage() {
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search accounts by company or email..."
+            placeholder={t("crmSearchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white dark:bg-[#0e1424] border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all placeholder:text-slate-400"
@@ -246,33 +251,33 @@ export default function ClientsPage() {
                         : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
                     }`}
                   >
-                    {client.hasOverdue ? "Overdue Balance" : "Good Standing"}
+                    {client.hasOverdue ? t("crmOverdueBalance") : t("crmGoodStanding")}
                   </span>
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 grid grid-cols-2 gap-3 text-xs">
                   <div>
-                    <span className="text-slate-400 block text-[11px]">Cumulative Billed:</span>
+                    <span className="text-slate-400 block text-[11px]">{t("crmCumulativeBilled")}</span>
                     <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
                       ${client.totalBilled.toLocaleString()}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[11px]">Pending Balance:</span>
+                    <span className="text-slate-400 block text-[11px]">{t("crmPendingBalance")}</span>
                     <span className="font-mono font-bold text-amber-500">
                       ${client.totalPending.toLocaleString()}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[11px]">Settled Funds:</span>
+                    <span className="text-slate-400 block text-[11px]">{t("crmSettledFunds")}</span>
                     <span className="font-mono font-bold text-emerald-500">
                       ${client.totalPaid.toLocaleString()}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[11px]">Total Contracts:</span>
+                    <span className="text-slate-400 block text-[11px]">{t("crmTotalContracts")}</span>
                     <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                      {client.invoiceCount} invoices
+                      {client.invoiceCount} {lang === "id" ? "tagihan" : "invoices"}
                     </span>
                   </div>
                 </div>
@@ -282,7 +287,7 @@ export default function ClientsPage() {
                     href={`/?client=${encodeURIComponent(client.name)}`}
                     className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
                   >
-                    <span>View Invoices</span>
+                    <span>{t("crmViewInvoices")}</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
                   </Link>
 
@@ -290,7 +295,7 @@ export default function ClientsPage() {
                     onClick={() => setIsCreateOpen(true)}
                     className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                   >
-                    + Invoice Client
+                    {t("crmInvoiceClient")}
                   </button>
                 </div>
               </div>
@@ -299,14 +304,12 @@ export default function ClientsPage() {
         </div>
       </main>
 
-      {/* Create Modal */}
       <InvoiceModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onCreate={handleCreateInvoice}
       />
 
-      {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-slate-800/80 py-6 text-xs text-slate-500 dark:text-slate-400 mt-auto text-center">
         FlowDesk CRM • Multi-Tenant Client Architecture • 2026
       </footer>

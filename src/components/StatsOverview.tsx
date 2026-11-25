@@ -1,12 +1,14 @@
+"use client";
+
 import React from "react";
 import { Invoice } from "@/lib/types";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   DollarSign,
   Clock,
   AlertTriangle,
   TrendingUp,
   ArrowUpRight,
-  ShieldAlert,
 } from "lucide-react";
 
 interface StatsOverviewProps {
@@ -14,6 +16,8 @@ interface StatsOverviewProps {
 }
 
 export function StatsOverview({ invoices }: StatsOverviewProps) {
+  const { t, lang } = useLanguage();
+
   const totalRevenue = invoices
     .filter((inv) => inv.status === "PAID")
     .reduce((sum, inv) => sum + inv.total, 0);
@@ -34,22 +38,22 @@ export function StatsOverview({ invoices }: StatsOverviewProps) {
 
   const stats = [
     {
-      title: "Settled Revenue",
+      title: t("statSettled"),
       amount: `$${totalRevenue.toLocaleString()}`,
-      subtitle: `${paidCount} invoices closed & verified`,
+      subtitle: `${paidCount} ${t("statSettledSub")}`,
       icon: DollarSign,
       color: "text-emerald-500 dark:text-emerald-400",
       bg: "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400",
       accent: "from-emerald-500/20 to-transparent",
-      badge: "+18.4% vs last mo",
+      badge: "+18.4% MoM",
       badgeColor: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
       progress: Math.min(100, Math.round((totalRevenue / (totalRevenue + pendingAmount || 1)) * 100)),
       progressBar: "bg-emerald-500",
     },
     {
-      title: "Pending Invoices",
+      title: t("statPending"),
       amount: `$${pendingAmount.toLocaleString()}`,
-      subtitle: `${pendingCount} awaiting client wire transfer`,
+      subtitle: `${pendingCount} ${t("statPendingSub")}`,
       icon: Clock,
       color: "text-amber-500 dark:text-amber-400",
       bg: "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400",
@@ -60,22 +64,22 @@ export function StatsOverview({ invoices }: StatsOverviewProps) {
       progressBar: "bg-amber-500",
     },
     {
-      title: "Overdue Receivables",
+      title: t("statOverdue"),
       amount: `$${overdueAmount.toLocaleString()}`,
-      subtitle: `${overdueCount} accounts past maturity date`,
+      subtitle: `${overdueCount} ${t("statOverdueSub")}`,
       icon: AlertTriangle,
       color: "text-rose-500 dark:text-rose-400",
       bg: "bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400",
       accent: "from-rose-500/20 to-transparent",
-      badge: overdueCount > 0 ? "Action required" : "Zero overdue",
+      badge: overdueCount > 0 ? (lang === "id" ? "Perlu Ditagih" : "Action required") : (lang === "id" ? "Aman" : "Zero overdue"),
       badgeColor: "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20",
       progress: Math.min(100, Math.round((overdueCount / (totalCount || 1)) * 100)),
       progressBar: "bg-rose-500",
     },
     {
-      title: "Collection Rate",
+      title: t("statCollection"),
       amount: `${collectionRate}%`,
-      subtitle: `${paidCount} of ${totalCount} transactions completed`,
+      subtitle: `${paidCount} ${t("tableOf")} ${totalCount} ${t("statCollectionSub")}`,
       icon: TrendingUp,
       color: "text-brand-500 dark:text-brand-400",
       bg: "bg-brand-500/10 border-brand-500/20 text-brand-600 dark:text-brand-400",

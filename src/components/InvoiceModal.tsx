@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Invoice, InvoiceItem } from "@/lib/types";
+import { useLanguage } from "@/context/LanguageContext";
 import { X, Plus, Trash2, CheckCircle2, DollarSign, Calculator, Calendar } from "lucide-react";
 
 interface InvoiceModalProps {
@@ -11,17 +12,17 @@ interface InvoiceModalProps {
 }
 
 export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
+  const { t, lang } = useLanguage();
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [dueDate, setDueDate] = useState("2026-12-31");
   const [taxRate, setTaxRate] = useState(10);
-  const [notes, setNotes] = useState("Payment due within net terms.");
+  const [notes, setNotes] = useState(lang === "id" ? "Pembayaran jatuh tempo sesuai syarat perjanjian." : "Payment due within net terms.");
   const [items, setItems] = useState<InvoiceItem[]>([
-    { id: "1", description: "Full-Stack Development Sprint", quantity: 1, rate: 3500, amount: 3500 },
+    { id: "1", description: lang === "id" ? "Sprint Pengembangan Full-Stack" : "Full-Stack Development Sprint", quantity: 1, rate: 3500, amount: 3500 },
   ]);
 
-  // Close on Escape key press
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -48,7 +49,7 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
       ...items,
       {
         id: String(Date.now()),
-        description: "API Integration & Infrastructure Tuning",
+        description: lang === "id" ? "Integrasi API & Optimasi Infrastruktur" : "API Integration & Infrastructure Tuning",
         quantity: 1,
         rate: 1500,
         amount: 1500,
@@ -62,7 +63,6 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
     }
   };
 
-  // Quick preset terms helper
   const applyPresetTerm = (days: number) => {
     const target = new Date();
     target.setDate(target.getDate() + days);
@@ -104,13 +104,13 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-[#0e1424]/95 backdrop-blur-md z-10">
           <div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <span>Create New Invoice</span>
+              <span>{t("modalCreateTitle")}</span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-600 dark:text-brand-400">
                 PRO-FORMA
               </span>
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Issue an immutable financial invoice with automated tax calculations
+              {t("modalCreateSub")}
             </p>
           </div>
           <button
@@ -125,7 +125,7 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                Client Company Name
+                {t("modalClientName")}
               </label>
               <input
                 required
@@ -138,7 +138,7 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                Client Billing Email
+                {t("modalClientEmail")}
               </label>
               <input
                 required
@@ -154,7 +154,7 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                Currency
+                {t("modalCurrency")}
               </label>
               <select
                 value={currency}
@@ -169,7 +169,7 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                Maturity Due Date
+                {t("modalDueDate")}
               </label>
               <input
                 type="date"
@@ -180,7 +180,7 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                Tax Rate (%)
+                {t("modalTaxRate")}
               </label>
               <input
                 type="number"
@@ -195,27 +195,27 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
 
           {/* Preset Terms Quick Selectors */}
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-400">Quick Term:</span>
+            <span className="text-slate-400">{t("modalQuickTerm")}</span>
             <button
               type="button"
               onClick={() => applyPresetTerm(0)}
               className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
             >
-              Due Today
+              {t("modalDueToday")}
             </button>
             <button
               type="button"
               onClick={() => applyPresetTerm(15)}
               className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
             >
-              Net 15
+              {t("modalNet15")}
             </button>
             <button
               type="button"
               onClick={() => applyPresetTerm(30)}
               className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
             >
-              Net 30
+              {t("modalNet30")}
             </button>
           </div>
 
@@ -223,14 +223,14 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
           <div className="pt-2">
             <div className="flex items-center justify-between mb-2.5">
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                Services & Deliverables
+                {t("modalLineItems")}
               </label>
               <button
                 type="button"
                 onClick={addItem}
                 className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1 cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5" /> Add Line Item
+                <Plus className="w-3.5 h-3.5" /> {t("modalAddItem")}
               </button>
             </div>
             <div className="space-y-2.5">
@@ -239,7 +239,7 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
                   <input
                     type="text"
                     required
-                    placeholder="Description of deliverable"
+                    placeholder={t("modalItemDesc")}
                     value={item.description}
                     onChange={(e) => handleItemChange(idx, "description", e.target.value)}
                     className="flex-1 px-3.5 py-2 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 outline-none focus:ring-1 focus:ring-brand-500"
@@ -247,7 +247,7 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
                   <input
                     type="number"
                     min="1"
-                    placeholder="Qty"
+                    placeholder={t("modalQty")}
                     value={item.quantity}
                     onChange={(e) => handleItemChange(idx, "quantity", e.target.value)}
                     className="w-16 px-2 py-2 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center outline-none font-mono focus:ring-1 focus:ring-brand-500"
@@ -255,7 +255,7 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
                   <input
                     type="number"
                     min="0"
-                    placeholder="Rate"
+                    placeholder={t("modalRate")}
                     value={item.rate}
                     onChange={(e) => handleItemChange(idx, "rate", e.target.value)}
                     className="w-28 px-3 py-2 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-right outline-none font-mono focus:ring-1 focus:ring-brand-500"
@@ -275,15 +275,15 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
           {/* Totals Summary */}
           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-sm space-y-2">
             <div className="flex justify-between text-slate-500 dark:text-slate-400">
-              <span>Subtotal</span>
+              <span>{t("modalSubtotal")}</span>
               <span className="font-mono">${subtotal.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-slate-500 dark:text-slate-400">
-              <span>Tax ({taxRate}%)</span>
+              <span>{t("modalTax")} ({taxRate}%)</span>
               <span className="font-mono">${taxAmount.toLocaleString()}</span>
             </div>
             <div className="flex justify-between font-black text-base text-slate-900 dark:text-slate-100 pt-2 border-t border-slate-200 dark:border-slate-800">
-              <span>Grand Total</span>
+              <span>{t("modalGrandTotal")}</span>
               <span className="font-mono text-brand-600 dark:text-brand-400">
                 ${total.toLocaleString()} {currency}
               </span>
@@ -296,13 +296,13 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
               onClick={onClose}
               className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
-              Cancel
+              {t("modalCancel")}
             </button>
             <button
               type="submit"
               className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-md shadow-brand-600/25 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
             >
-              Issue & Register Invoice
+              {t("modalSubmit")}
             </button>
           </div>
         </form>

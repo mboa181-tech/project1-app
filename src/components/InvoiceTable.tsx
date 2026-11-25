@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { Invoice, InvoiceStatus } from "@/lib/types";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   Search,
   CheckCircle2,
@@ -14,7 +15,6 @@ import {
   Download,
   RotateCcw,
   Sparkles,
-  ExternalLink,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -29,7 +29,6 @@ interface InvoiceTableProps {
 type SortField = "invoiceNumber" | "clientName" | "dueDate" | "total" | "status";
 type SortDirection = "asc" | "desc";
 
-// Client avatar gradient generator based on client initials
 function getAvatarGradient(name: string) {
   const gradients = [
     "from-blue-500 to-indigo-600",
@@ -48,12 +47,12 @@ export function InvoiceTable({
   onToggleStatus,
   onDeleteInvoice,
 }: InvoiceTableProps) {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [sortField, setSortField] = useState<SortField>("dueDate");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
-  // Sorting handler
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -63,7 +62,6 @@ export function InvoiceTable({
     }
   };
 
-  // Filtered & Sorted Invoices
   const processedInvoices = useMemo(() => {
     return invoices
       .filter((inv) => {
@@ -87,7 +85,6 @@ export function InvoiceTable({
       });
   }, [invoices, searchTerm, statusFilter, sortField, sortDirection]);
 
-  // Real CSV Export Function
   const handleExportCSV = () => {
     const headers = ["Invoice Number,Client Name,Client Email,Issue Date,Due Date,Status,Subtotal,Tax,Total,Currency"];
     const rows = processedInvoices.map((inv) =>
@@ -121,28 +118,28 @@ export function InvoiceTable({
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Paid
+            {t("statusPaid")}
           </span>
         );
       case "PENDING":
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shadow-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-            Pending
+            {t("statusPending")}
           </span>
         );
       case "OVERDUE":
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 shadow-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-ping" />
-            Overdue
+            {t("statusOverdue")}
           </span>
         );
       case "DRAFT":
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20 shadow-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-            Draft
+            {t("statusDraft")}
           </span>
         );
     }
@@ -159,16 +156,23 @@ export function InvoiceTable({
     );
   };
 
+  const filterTabs = [
+    { key: "ALL", label: t("statusAll") },
+    { key: "PAID", label: t("statusPaid") },
+    { key: "PENDING", label: t("statusPending") },
+    { key: "OVERDUE", label: t("statusOverdue") },
+    { key: "DRAFT", label: t("statusDraft") },
+  ];
+
   return (
     <div className="bg-white dark:bg-[#0e1424] rounded-2xl border border-slate-200/90 dark:border-slate-800/90 shadow-sm overflow-hidden transition-colors">
       {/* Search and Filters Toolbar */}
       <div className="p-4 sm:p-5 border-b border-slate-200/80 dark:border-slate-800/80 flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
-        {/* Search input with keyboard shortcut hint */}
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search by invoice number, client or email..."
+            placeholder={t("tableSearchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-12 py-2 rounded-xl text-sm bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all placeholder:text-slate-400"
@@ -183,33 +187,31 @@ export function InvoiceTable({
           )}
         </div>
 
-        {/* Right action group: Status Pills & Export */}
+        {/* Status Pills & Export */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Status Filter Tabs */}
           <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-900/80 rounded-xl overflow-x-auto text-xs font-semibold border border-slate-200/50 dark:border-slate-800/50">
-            {["ALL", "PAID", "PENDING", "OVERDUE", "DRAFT"].map((st) => (
+            {filterTabs.map((tab) => (
               <button
-                key={st}
-                onClick={() => setStatusFilter(st)}
+                key={tab.key}
+                onClick={() => setStatusFilter(tab.key)}
                 className={`px-3 py-1.5 rounded-lg transition-all capitalize cursor-pointer whitespace-nowrap ${
-                  statusFilter === st
+                  statusFilter === tab.key
                     ? "bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-300 shadow-sm font-bold"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
-                {st.toLowerCase()}
+                {tab.label}
               </button>
             ))}
           </div>
 
-          {/* Export to CSV Button */}
           <button
             onClick={handleExportCSV}
             title="Download CSV Spreadsheet"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-300 transition-colors shadow-sm cursor-pointer"
           >
             <Download className="w-3.5 h-3.5 text-slate-500" />
-            <span>Export CSV</span>
+            <span>{t("tableExportCSV")}</span>
           </button>
         </div>
       </div>
@@ -224,7 +226,7 @@ export function InvoiceTable({
                 className="py-3.5 px-4 sm:px-6 cursor-pointer hover:text-slate-900 dark:hover:text-white group"
               >
                 <div className="flex items-center gap-1.5">
-                  <span>Invoice</span>
+                  <span>{t("tableInvoice")}</span>
                   {renderSortArrow("invoiceNumber")}
                 </div>
               </th>
@@ -233,7 +235,7 @@ export function InvoiceTable({
                 className="py-3.5 px-4 cursor-pointer hover:text-slate-900 dark:hover:text-white group"
               >
                 <div className="flex items-center gap-1.5">
-                  <span>Client</span>
+                  <span>{t("tableClient")}</span>
                   {renderSortArrow("clientName")}
                 </div>
               </th>
@@ -242,7 +244,7 @@ export function InvoiceTable({
                 className="py-3.5 px-4 cursor-pointer hover:text-slate-900 dark:hover:text-white group"
               >
                 <div className="flex items-center gap-1.5">
-                  <span>Due Date</span>
+                  <span>{t("tableDueDate")}</span>
                   {renderSortArrow("dueDate")}
                 </div>
               </th>
@@ -251,7 +253,7 @@ export function InvoiceTable({
                 className="py-3.5 px-4 cursor-pointer hover:text-slate-900 dark:hover:text-white group"
               >
                 <div className="flex items-center gap-1.5">
-                  <span>Amount</span>
+                  <span>{t("tableAmount")}</span>
                   {renderSortArrow("total")}
                 </div>
               </th>
@@ -260,11 +262,11 @@ export function InvoiceTable({
                 className="py-3.5 px-4 cursor-pointer hover:text-slate-900 dark:hover:text-white group"
               >
                 <div className="flex items-center gap-1.5">
-                  <span>Status</span>
+                  <span>{t("tableStatus")}</span>
                   {renderSortArrow("status")}
                 </div>
               </th>
-              <th className="py-3.5 px-4 sm:px-6 text-right">Actions</th>
+              <th className="py-3.5 px-4 sm:px-6 text-right">{t("tableActions")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200/80 dark:divide-slate-800/80">
@@ -277,10 +279,10 @@ export function InvoiceTable({
                     </div>
                     <div>
                       <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">
-                        No matching invoices found
+                        {t("tableNoInvoices")}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        Try adjusting your search query or status filter.
+                        {t("tableNoInvoicesSub")}
                       </p>
                     </div>
                     <button
@@ -290,7 +292,7 @@ export function InvoiceTable({
                       }}
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-brand-600 dark:text-brand-400 bg-brand-500/10 hover:bg-brand-500/20 transition-colors"
                     >
-                      <RotateCcw className="w-3 h-3" /> Reset Filters
+                      <RotateCcw className="w-3 h-3" /> {t("tableResetFilters")}
                     </button>
                   </div>
                 </td>
@@ -317,7 +319,7 @@ export function InvoiceTable({
                         {inv.invoiceNumber}
                       </button>
                       <span className="block text-[11px] text-slate-400 mt-0.5">
-                        Issued: {inv.issueDate}
+                        {inv.issueDate}
                       </span>
                     </td>
                     <td className="py-4 px-4">
@@ -349,7 +351,7 @@ export function InvoiceTable({
                     <td className="py-4 px-4">
                       <button
                         onClick={() => onToggleStatus(inv.id)}
-                        title="Click to toggle status (Paid / Pending / Draft)"
+                        title="Klik untuk ubah status"
                         className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
                       >
                         {getStatusBadge(inv.status)}
@@ -359,15 +361,15 @@ export function InvoiceTable({
                       <div className="flex items-center justify-end gap-1 sm:gap-2">
                         <button
                           onClick={() => onViewInvoice(inv)}
-                          title="View & Print Official PDF"
+                          title="Preview & Print"
                           className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                         >
                           <Eye className="w-3.5 h-3.5" />
-                          <span className="hidden md:inline">Preview</span>
+                          <span className="hidden md:inline">{t("tablePreview")}</span>
                         </button>
                         <button
                           onClick={() => onDeleteInvoice(inv.id)}
-                          title="Delete Invoice"
+                          title="Delete"
                           className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -382,14 +384,15 @@ export function InvoiceTable({
         </table>
       </div>
 
-      {/* Table Footer Summary */}
+      {/* Table Footer */}
       <div className="p-4 border-t border-slate-200/80 dark:border-slate-800/80 text-xs text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2">
         <span className="font-medium">
-          Showing <strong>{processedInvoices.length}</strong> of <strong>{invoices.length}</strong> total records
+          {t("tableShowing")} <strong>{processedInvoices.length}</strong> {t("tableOf")}{" "}
+          <strong>{invoices.length}</strong> {t("tableTotalRecords")}
         </span>
         <div className="flex items-center gap-2 text-[11px] text-slate-400">
           <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span>Tip: Click any status pill to cycle states</span>
+          <span>{t("tableTip")}</span>
         </div>
       </div>
     </div>

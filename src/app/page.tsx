@@ -8,6 +8,7 @@ import { StatsOverview } from "@/components/StatsOverview";
 import { InvoiceTable } from "@/components/InvoiceTable";
 import { InvoiceModal } from "@/components/InvoiceModal";
 import { InvoiceDetailModal } from "@/components/InvoiceDetailModal";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   Check,
   ShieldCheck,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 
 export default function DashboardPage() {
+  const { t, lang } = useLanguage();
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [isDark, setIsDark] = useState(true);
@@ -33,7 +35,6 @@ export default function DashboardPage() {
 
   const currentUser = initialDemoUsers[currentUserIndex];
 
-  // Dark mode toggle effect
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add("dark");
@@ -42,7 +43,6 @@ export default function DashboardPage() {
     }
   }, [isDark]);
 
-  // Fetch invoices from backend API on mount
   useEffect(() => {
     async function loadInvoices() {
       try {
@@ -61,7 +61,6 @@ export default function DashboardPage() {
         setIsLoading(false);
       }
 
-      // LocalStorage fallback
       try {
         const local = localStorage.getItem("flowdesk_invoices_v1");
         if (local) {
@@ -74,7 +73,6 @@ export default function DashboardPage() {
     loadInvoices();
   }, []);
 
-  // Sync to localStorage as client safety net
   useEffect(() => {
     try {
       localStorage.setItem("flowdesk_invoices_v1", JSON.stringify(invoices));
@@ -89,16 +87,21 @@ export default function DashboardPage() {
   const handleSwitchUser = () => {
     const nextIdx = (currentUserIndex + 1) % initialDemoUsers.length;
     setCurrentUserIndex(nextIdx);
-    showToast(`Switched workspace context to ${initialDemoUsers[nextIdx].name} (${initialDemoUsers[nextIdx].role})`);
+    showToast(
+      lang === "id"
+        ? `Beralih ke konteks ${initialDemoUsers[nextIdx].name} (${initialDemoUsers[nextIdx].role})`
+        : `Switched workspace context to ${initialDemoUsers[nextIdx].name} (${initialDemoUsers[nextIdx].role})`
+    );
   };
 
-  // Create invoice with API sync
   const handleCreateInvoice = async (newInvoice: Invoice) => {
-    // 1. Optimistic UI update
     setInvoices([newInvoice, ...invoices]);
-    showToast(`Invoice ${newInvoice.invoiceNumber} recorded! Syncing with database...`);
+    showToast(
+      lang === "id"
+        ? `Tagihan ${newInvoice.invoiceNumber} diterbitkan! Menyinkronkan ke database...`
+        : `Invoice ${newInvoice.invoiceNumber} recorded! Syncing with database...`
+    );
 
-    // 2. Background API call
     try {
       const res = await fetch("/api/invoices", {
         method: "POST",
@@ -106,14 +109,17 @@ export default function DashboardPage() {
         body: JSON.stringify(newInvoice),
       });
       if (res.ok) {
-        showToast(`Invoice ${newInvoice.invoiceNumber} persisted successfully.`);
+        showToast(
+          lang === "id"
+            ? `Tagihan ${newInvoice.invoiceNumber} berhasil disimpan ke database.`
+            : `Invoice ${newInvoice.invoiceNumber} persisted successfully.`
+        );
       }
     } catch (err) {
       console.error("API error:", err);
     }
   };
 
-  // Toggle invoice status with API sync
   const handleToggleStatus = async (invoiceId: string) => {
     const target = invoices.find((inv) => inv.id === invoiceId);
     if (!target) return;
@@ -127,13 +133,15 @@ export default function DashboardPage() {
         ? "PENDING"
         : "PAID";
 
-    // 1. Optimistic update
     setInvoices((prev) =>
       prev.map((inv) => (inv.id === invoiceId ? { ...inv, status: nextStatus } : inv))
     );
-    showToast(`Status updated to ${nextStatus}.`);
+    showToast(
+      lang === "id"
+        ? `Status tagihan berhasil diubah ke ${nextStatus}.`
+        : `Status updated to ${nextStatus}.`
+    );
 
-    // 2. Background API call
     try {
       await fetch("/api/invoices", {
         method: "PATCH",
@@ -145,10 +153,13 @@ export default function DashboardPage() {
     }
   };
 
-  // Delete invoice with API sync
   const handleDeleteInvoice = async (invoiceId: string) => {
     setInvoices((prev) => prev.filter((inv) => inv.id !== invoiceId));
-    showToast(`Invoice removed from active registry.`);
+    showToast(
+      lang === "id"
+        ? "Tagihan dihapus dari daftar aktif."
+        : "Invoice removed from active registry."
+    );
 
     try {
       await fetch(`/api/invoices?id=${invoiceId}`, { method: "DELETE" });
@@ -157,20 +168,26 @@ export default function DashboardPage() {
     }
   };
 
-  // Simulate Instant Webhook Payment
   const handleSimulateWebhook = async () => {
     const target = invoices.find((inv) => inv.status === "PENDING" || inv.status === "OVERDUE");
     if (target) {
       await handleToggleStatus(target.id);
-      showToast(`⚡ Webhook Verified: ${target.invoiceNumber} settled ($${target.total.toLocaleString()} USD)!`);
+      showToast(
+        lang === "id"
+          ? `⚡ Webhook Diterima: Tagihan ${target.invoiceNumber} lunas ($${target.total.toLocaleString()} USD)!`
+          : `⚡ Webhook Verified: ${target.invoiceNumber} settled ($${target.total.toLocaleString()} USD)!`
+      );
     } else {
-      showToast("All invoices are settled! Create a new invoice to test webhook simulation.");
+      showToast(
+        lang === "id"
+          ? "Semua tagihan sudah lunas! Buat tagihan baru untuk mencoba simulasi webhook."
+          : "All invoices are settled! Create a new invoice to test webhook simulation."
+      );
     }
   };
 
   return (
     <div className="relative min-h-screen flex flex-col transition-colors duration-200">
-      {/* Ambient background glow for high-end SaaS feel */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[360px] bg-gradient-to-b from-brand-500/10 via-purple-500/5 to-transparent blur-[120px] pointer-events-none rounded-full" />
 
       <Navbar
@@ -181,7 +198,6 @@ export default function DashboardPage() {
         onOpenCreateModal={() => setIsCreateOpen(true)}
       />
 
-      {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-2xl border border-slate-700/50 dark:border-slate-200 text-xs font-semibold animate-bounce">
           <Check className="w-4 h-4 text-emerald-400 dark:text-emerald-600 shrink-0" />
@@ -189,14 +205,12 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Main Container */}
       <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Page Title & Status Actions */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-500/10 border border-brand-500/20 px-2.5 py-0.5 rounded-full">
-                Workspace: Apex Group
+                {t("dashWorkspace")}
               </span>
               <button
                 onClick={() => setIsDbModalOpen(true)}
@@ -207,48 +221,43 @@ export default function DashboardPage() {
               </button>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-              Financial Billing & Invoices
+              {t("dashTitle")}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Multi-tenant workspace operations for agency contracts, retainers, and settlement automation.
+              {t("dashSubtitle")}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            {/* Database Setup Info Button */}
             <button
               onClick={() => setIsDbModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
             >
               <Database className="w-3.5 h-3.5 text-brand-500" />
-              <span>Database Config</span>
+              <span>{t("dashDbConfig")}</span>
             </button>
 
-            {/* Simulate Webhook Button */}
             <button
               onClick={handleSimulateWebhook}
-              title="Simulate incoming Stripe/ACH webhook"
+              title="Simulasikan penerimaan webhook pembayaran"
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700/80 transition-all cursor-pointer shadow-sm active:scale-95"
             >
               <Zap className="w-3.5 h-3.5 text-amber-500" />
-              <span>Simulate Webhook</span>
+              <span>{t("dashSimulateWebhook")}</span>
             </button>
 
-            {/* Quick Create Invoice CTA */}
             <button
               onClick={() => setIsCreateOpen(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs shadow-md shadow-brand-600/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>New Invoice</span>
+              <span>{t("navNewInvoice")}</span>
             </button>
           </div>
         </div>
 
-        {/* Realtime Stats */}
         <StatsOverview invoices={invoices} />
 
-        {/* Invoice Table View */}
         <InvoiceTable
           invoices={invoices}
           onViewInvoice={(inv) => setSelectedInvoice(inv)}
@@ -268,7 +277,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-base text-slate-900 dark:text-white">
-                    Cloud Database Architecture
+                    {lang === "id" ? "Arsitektur Database Cloud" : "Cloud Database Architecture"}
                   </h3>
                   <p className="text-xs text-slate-400">PostgreSQL / Supabase Integration</p>
                 </div>
@@ -288,11 +297,11 @@ export default function DashboardPage() {
 
               <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
                 <span className="font-bold text-brand-600 dark:text-brand-400 block">
-                  Langkah Menghubungkan Supabase Gratis (2 Menit):
+                  {lang === "id" ? "Langkah Menghubungkan Supabase Gratis (2 Menit):" : "Connecting Free Supabase (2 Minutes):"}
                 </span>
                 <ol className="list-decimal pl-4 space-y-1 text-slate-500 dark:text-slate-400">
                   <li>Buat proyek baru di <strong>supabase.com</strong> (Free tier).</li>
-                  <li>Buka menu <strong>SQL Editor</strong>, lalu copy-paste isi file <code>supabase/schema.sql</code> dari repository ini dan jalankan (Run).</li>
+                  <li>Buka menu <strong>SQL Editor</strong>, lalu jalankan script dari <code>supabase/schema.sql</code>.</li>
                   <li>Buka <strong>Project Settings ➔ API</strong>, copy <code>Project URL</code> dan <code>anon public key</code>.</li>
                   <li>Masukkan ke Vercel Environment Variables:
                     <ul className="list-disc pl-4 mt-1 font-mono text-[11px] text-slate-400">
@@ -313,35 +322,32 @@ export default function DashboardPage() {
                 onClick={() => setIsDbModalOpen(false)}
                 className="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 transition-colors"
               >
-                Tutup & Mengerti
+                {lang === "id" ? "Tutup & Mengerti" : "Close & Got it"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Create Modal */}
       <InvoiceModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onCreate={handleCreateInvoice}
       />
 
-      {/* View Detail / Print PDF Modal */}
       <InvoiceDetailModal
         invoice={selectedInvoice}
         onClose={() => setSelectedInvoice(null)}
         onToggleStatus={handleToggleStatus}
       />
 
-      {/* Footer */}
       <footer className="relative z-10 border-t border-slate-200 dark:border-slate-800/80 py-6 text-xs text-slate-500 dark:text-slate-400 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© 2026 FlowDesk Operations. Engineered with Next.js 15, TypeScript, & PostgreSQL.</p>
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5 text-slate-400">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              All systems operational
+              {lang === "id" ? "Semua sistem berjalan normal" : "All systems operational"}
             </span>
           </div>
         </div>
