@@ -75,7 +75,7 @@ export function InvoiceDetailModal({
         aria-hidden="true"
       />
 
-      <div className="relative z-10 glass-modal rounded-[28px] max-w-3xl w-full max-h-[92vh] overflow-y-auto print:max-h-none print:shadow-none print:border-none print:bg-white print:text-black print:rounded-none print:w-full print:max-w-full">
+      <div className="relative z-10 glass-modal rounded-[28px] max-w-3xl w-full max-h-[92vh] overflow-y-auto print:overflow-visible print:max-h-none print:shadow-none print:border-none print:bg-white print:text-black print:rounded-none print:w-full print:max-w-full">
         {/* Header Toolbar (Hidden when printed) */}
         <div className="p-4 sm:p-5 border-b border-[var(--gd-line)] flex items-center justify-between sticky top-0 bg-[var(--gd-surface)]/85 backdrop-blur-xl z-20 print:hidden">
           <div className="flex items-center gap-2.5">
@@ -165,7 +165,7 @@ export function InvoiceDetailModal({
         </div>
 
         {/* Printable Standard Invoice Sheet */}
-        <div className="relative p-6 sm:p-10 space-y-6 print:p-8 print:text-slate-900 print:bg-white print:space-y-5">
+        <div className="printable-document relative p-6 sm:p-10 space-y-6 print:p-0 print:text-slate-900 print:bg-white print:space-y-5">
           {/* Standard Company Header */}
           <div className="flex justify-between items-start border-b-2 border-[var(--gd-line)] print:border-slate-800 pb-5">
             <div>
