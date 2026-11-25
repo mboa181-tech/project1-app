@@ -1,176 +1,114 @@
 <div align="center">
 
-# ⚡ FlowDesk — Modern B2B Invoicing & Financial Operations Engine
+# ⚡ FlowDesk — B2B Invoicing & Financial Operations Platform
 
-**Production-grade, multi-tenant billing & financial ops platform engineered with Next.js 15, TypeScript, PostgreSQL, and Redis.**
+**Full-stack B2B invoicing, client CRM, and payment portal engineered with Next.js 15, TypeScript, Tailwind CSS, and Supabase (PostgreSQL + Auth).**
 
 [![Next.js](https://img.shields.io/badge/Next.js-15_App_Router-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0_Strict-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16_ACID-4169E1?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6_Strict-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_%2B_Auth-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v3.4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen?style=for-the-badge&logo=github-actions)](https://github.com/)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
+[![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-000000?style=for-the-badge&logo=vercel)](https://project1-app-khaki.vercel.app/)
 
-[🌐 View Live Production Demo](https://project1-app-khaki.vercel.app/) • [📖 GitHub Repository](https://github.com/mboa181-tech/project1-app) • [🐞 Report Issue](https://github.com/mboa181-tech/project1-app/issues)
+[🌐 View Live Production Demo](https://project1-app-khaki.vercel.app/) • [🔐 Login Portal](https://project1-app-khaki.vercel.app/login) • [📖 GitHub Repository](https://github.com/mboa181-tech/project1-app)
 
 </div>
 
 ---
 
-## 🎯 Executive Summary & Problem Statement
+## 🎯 Overview
 
-Most small-to-medium digital agencies and freelance collectives struggle with fragmented billing workflows: spreadsheets, manual PDF invoice creation, delayed client follow-ups, and lack of idempotent payment status reconciliations.
+**FlowDesk** is a modern B2B invoicing and financial operations web application built for agencies and service businesses in Indonesia. It unifies invoice management, client lifetime value (LTV) tracking, and a shareable client checkout portal in one responsive interface.
 
-**FlowDesk** solves this by providing a unified, multi-tenant workspace with:
-- Instant sub-second invoice lifecycle management (`DRAFT` ➔ `SENT` ➔ `PAID` ➔ `OVERDUE`).
-- Server-side deterministic PDF compilation with dynamic tax and multi-currency calculations.
-- Idempotent payment webhook ingestion simulated with cryptographically verified payloads.
-- Complete audit trail logging across all financial and membership operations.
-
----
-
-## ⚡ Live Demo & Quick Evaluation
-
-For hiring managers and reviewers who want to inspect the application immediately without signing up:
-
-| Role | Demo Email | Password | Access Level |
-| :--- | :--- | :--- | :--- |
-| **Organization Owner** | `owner@demo.flowdesk.app` | `DemoPass2026!` | Full admin rights, billing, team management, audit logs |
-| **Billing Member** | `staff@demo.flowdesk.app` | `DemoPass2026!` | Create/edit invoices, view clients, download PDF |
-
-> 🔗 **Live Demo URL:** [https://project1-app-khaki.vercel.app/](https://project1-app-khaki.vercel.app/)  
-> *(Automated daily database seeding runs at 00:00 UTC to maintain pristine demo state).*
+### Key Implemented Features
+- **Real-Time Financial Dashboard (`/`)**: Tracks settled revenue, pending invoices, overdue receivables, and collection rate in **Indonesian Rupiah (IDR)**.
+- **Full Invoice Lifecycle (`PAID`, `PENDING`, `OVERDUE`, `DRAFT`)**: Create invoices with dynamic line items and automatic tax (PPN 11%) calculation, toggle statuses, filter/search/sort, export CSV, and print/save PDF via a dedicated printable invoice modal.
+- **Persistent Cloud Database (`Supabase PostgreSQL`)**: Backed by `/api/invoices` (`GET`, `POST`, `PATCH`, `DELETE`) connected to PostgreSQL with automatic schema mapping and graceful local fallback.
+- **Supabase Authentication (`/login`)**: Real email/password sign-up and sign-in powered by Supabase Auth, session persistence in `AuthContext`, plus a Guest Preview mode for instant evaluation.
+- **Client CRM Directory (`/clients`)**: Aggregates billed, settled, pending, and overdue balances per corporate account.
+- **Public Client Payment Portal (`/pay/[id]`)**: Shareable invoice checkout page supporting Credit Card, Virtual Account (BCA/Mandiri), and QRIS payment flows with live status settlement.
+- **Bilingual UI (Bahasa Indonesia & English) + Dark/Light Mode**: Instant language switcher (`ID` default / `EN`) persisted in `localStorage`.
 
 ---
 
-## 🏗️ System Architecture & Data Flow
+## 🏗️ System Architecture
 
 ```mermaid
 flowchart TD
-    Client["Client Browser / Mobile Web (Next.js 15 Client Components)"] --> Edge["Cloudflare CDN & Edge Proxy"]
-    Edge --> AppRouter["Next.js Server Runtime (SSR & Server Actions)"]
-    
-    subgraph Security & Access Layer
-        AppRouter --> AuthMiddleware["Auth.js / NextAuth (HttpOnly Session & RBAC)"]
-        AuthMiddleware --> RateLimiter["Sliding Window Rate Limiter (Upstash Redis)"]
-    end
-    
-    subgraph Domain & Persistence
-        RateLimiter --> ZodValidation["Zod Schema Validation Pipeline"]
-        ZodValidation --> ServiceLayer["Business Logic & Audit Services"]
-        ServiceLayer --> ORM["Drizzle ORM / Prisma Engine"]
-        ORM --> Postgres[("PostgreSQL 16 Multi-Tenant DB")]
-    end
-    
-    subgraph Asynchronous Pipelines
-        ServiceLayer --> PDFWorker["On-demand Headless PDF Generator"]
-        PDFWorker --> S3Storage[("Cloudflare R2 Object Store")]
-        ServiceLayer --> EventDispatcher["Webhook Ingestion & Resend Notifications"]
-    end
+    Client["Browser UI (Next.js 15 Client Components)"] --> Auth["Supabase Auth (JWT Session & Sign-In/Sign-Up)"]
+    Client --> API["Next.js App Router API (/api/invoices)"]
+    API --> Mapper["DB Mapper (mapFromDb / mapToDb)"]
+    Mapper --> Postgres[("Supabase PostgreSQL (public.invoices)")]
 ```
 
 ---
 
-## 💎 Engineering Highlights (What Makes This Project Stand Out)
+## 🛠️ Tech Stack
 
-1. **Enterprise-Grade Multi-Tenancy (Data Isolation)**:
-   - Every invoice, client, and transaction is strictly scoped to `organization_id` at both the middleware and database query layers, preventing cross-tenant leakage.
-2. **Idempotency & Race-Condition Safe Webhooks**:
-   - Webhook processing implements Redis-backed distributed locks and persistent event deduplication logs to prevent duplicate credits or status overrides.
-3. **Optimistic UI with Instant Perceived Speed**:
-   - Financial adjustments and invoice status toggles reflect instantly in the UI with automatic server rollback on network failure.
-4. **Resilient Background Processing**:
-   - Heavy tasks (PDF document compilation and outbound notification dispatches) are offloaded to background serverless queues, keeping HTTP response times under 200ms.
-5. **Fluid Micro-Interactions & Accessible Design**:
-   - Designed with WCAG 2.1 AA compliance, full keyboard navigability, zero layout shift (CLS < 0.02), and seamless dark/light theme switching without unstyled flash.
+| Layer | Technology |
+| :--- | :--- |
+| **Framework** | Next.js 15 (App Router) & React 18 |
+| **Language** | TypeScript (Strict Mode) |
+| **Styling** | Tailwind CSS v3.4 & Lucide Icons |
+| **Database & Auth** | Supabase (`@supabase/supabase-js` — PostgreSQL + Auth) |
+| **Deployment** | Vercel (GitHub CI/CD Auto-Deploy) |
 
 ---
 
-## 🛠️ Tech Stack & Decisions
-
-| Layer | Technology | Decision Rationale |
-| :--- | :--- | :--- |
-| **Framework** | Next.js 15 (App Router, Server Actions) | Zero-waterfall data fetching, unified full-stack TypeScript codebase. |
-| **Language** | TypeScript 5 (Strict Mode) | End-to-end type safety between DB models, API contracts, and UI components. |
-| **Database** | PostgreSQL 16 (Neon / Supabase) | Strong ACID transactions, row-level security capabilities, relational integrity. |
-| **ORM** | Drizzle ORM / Prisma | Type-safe SQL migrations, lightweight runtime overhead, and explicit query plan control. |
-| **Cache & Queue** | Upstash Redis | Serverless rate-limiting and low-latency cache for fast session checks. |
-| **UI Components**| Tailwind CSS + Radix UI / shadcn | High customization velocity, unstyled accessible primitives, zero runtime CSS overhead. |
-| **Testing** | Vitest, React Testing Library, Playwright | Fast unit test execution and reliable E2E browser automation for core checkouts. |
-| **DevOps / CI** | GitHub Actions, Docker, Vercel | Automated linting, type-checking, PR preview deployments, and reproducible container builds. |
-
----
-
-## 📂 Repository Directory Structure
+## 📂 Repository Structure
 
 ```text
-├── .github/
-│   └── workflows/
-│       ├── ci.yml               # Automated test, typecheck & lint on PRs
-│       └── db-seed.yml          # Nightly demo reset cron
-├── docker/
-│   ├── docker-compose.yml       # Local PostgreSQL + Redis dev environment
-│   └── Dockerfile               # Multi-stage production container build
+├── supabase/
+│   └── schema.sql               # PostgreSQL table DDL, indexes, RLS policy & IDR seed data
 ├── src/
-│   ├── app/                     # Next.js 15 App Router routes & layouts
-│   │   ├── (auth)/              # Login, register, forgot-password
-│   │   ├── (dashboard)/         # Protected workspace & financial views
-│   │   │   ├── invoices/        # Invoice creation, edit, preview & detail
-│   │   │   ├── clients/         # Client management
-│   │   │   └── settings/        # Org settings, API keys & audit logs
-│   │   └── api/                 # Webhooks & public REST endpoints
-│   ├── components/              # Reusable UI & atomic design system
-│   │   ├── ui/                  # Buttons, modals, tables, badges (shadcn)
-│   │   └── invoice/             # Invoice table, summary card, PDF viewer
-│   ├── lib/                     # Infrastructure clients (DB, Redis, S3, Email)
-│   │   ├── db/                  # Drizzle schema, relations, migrations
-│   │   └── utils/               # Currency formatters, date helpers, calculations
-│   ├── server/                  # Server-side business logic & services
-│   │   ├── actions/             # Next.js Server Actions (Mutations)
-│   │   └── services/            # Invoicing, audit log, PDF compiler services
-│   └── types/                   # Shared TypeScript interfaces & Zod schemas
-├── tests/
-│   ├── unit/                    # Financial math & tax calculation tests
-│   └── e2e/                     # Critical path Playwright specs (create invoice flow)
-├── .env.example                 # Documented environment variables template
-└── README.md
+│   ├── app/
+│   │   ├── api/invoices/        # REST API handlers (GET, POST, PATCH, DELETE)
+│   │   ├── clients/             # Client CRM & LTV directory page
+│   │   ├── login/               # Supabase Auth sign-in & sign-up page
+│   │   ├── pay/[id]/            # Public client payment gateway page
+│   │   ├── globals.css          # Tailwind base styles & theme variables
+│   │   ├── layout.tsx           # Root layout with LanguageProvider & AuthProvider
+│   │   └── page.tsx             # Main financial dashboard
+│   ├── components/
+│   │   ├── InvoiceDetailModal.tsx
+│   │   ├── InvoiceModal.tsx
+│   │   ├── InvoiceTable.tsx
+│   │   ├── Navbar.tsx
+│   │   └── StatsOverview.tsx
+│   ├── context/
+│   │   ├── AuthContext.tsx      # Supabase Auth session state
+│   │   └── LanguageContext.tsx  # Bilingual EN/ID state
+│   └── lib/
+│       ├── format-currency.ts   # Indonesian Rupiah (IDR) formatter
+│       ├── i18n.ts              # EN & ID translation dictionary
+│       ├── mock-data.ts         # Fallback seed data in IDR
+│       ├── supabase.ts          # Safe Supabase client & DB mappers
+│       └── types.ts             # TypeScript interfaces
+├── package.json
+└── tsconfig.json
 ```
 
 ---
 
 ## 🚀 Getting Started Locally
 
-### Prerequisites
-- Node.js `>= 20.x`
-- Docker & Docker Compose *(optional, for running local DB & Redis)*
-- npm / pnpm / bun
-
-### 1. Clone the repository
+### 1. Clone & Install Dependencies
 ```bash
 git clone https://github.com/mboa181-tech/project1-app.git
 cd project1-app
-```
-
-### 2. Configure Environment Variables
-Copy `.env.example` to `.env.local`:
-```bash
-cp .env.example .env.local
-```
-Fill in your database URL and secrets (defaults work out of the box with Docker).
-
-### 3. Spin up Local Services (PostgreSQL & Redis)
-```bash
-docker compose up -d
-```
-
-### 4. Install Dependencies & Run Database Migrations
-```bash
 npm install
-npm run db:push
-npm run db:seed
 ```
 
-### 5. Launch Development Server
+### 2. Configure Supabase Database
+1. Create a free project at [supabase.com](https://supabase.com).
+2. Open **SQL Editor** and execute the script in `supabase/schema.sql`.
+3. Create `.env.local` in the project root:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-or-publishable-key
+```
+
+### 3. Run Development Server
 ```bash
 npm run dev
 ```
@@ -178,46 +116,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 🧪 Testing & Code Quality
+## 📜 Author & Links
 
-This project enforces strict quality standards before any code can be merged into the `main` branch:
-
-```bash
-# Run unit & calculation tests
-npm run test
-
-# Run End-to-End browser tests (Playwright)
-npm run test:e2e
-
-# Run TypeScript strict type-check
-npm run typecheck
-
-# Run ESLint & Prettier checks
-npm run lint
-```
-
-### 📊 Lighthouse Score (Desktop & Mobile)
-- **Performance:** 98 / 100
-- **Accessibility:** 100 / 100
-- **Best Practices:** 100 / 100
-- **SEO:** 100 / 100
-
----
-
-## 💼 Resume / CV Showcase Snippets (For Recruiters)
-
-Feel free to adapt this bullet point for your professional resume:
-
-> **Full-Stack Software Engineer — FlowDesk Project**
-> * Designed and deployed a multi-tenant B2B financial invoicing platform with Next.js 15, TypeScript, PostgreSQL, and Upstash Redis.
-> * Implemented an idempotent payment webhook engine and on-demand PDF document generator, reducing processing turnaround to < 300ms.
-> * Built optimistic UI state handlers and server-side RBAC protection, achieving a 98+ Lighthouse score and 100% test pass rate in CI/CD pipelines.
-
----
-
-## 📜 License & Acknowledgments
-
-Distributed under the **MIT License**. See `LICENSE` for more information.
-
-Engineered with passion by **[Your Name]**  
-* GitHub: [@mboa181-tech](https://github.com/mboa181-tech) • LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile) • Email: `you@example.com`
+Built by **[@mboa181-tech](https://github.com/mboa181-tech)**  
+* Live App: [https://project1-app-khaki.vercel.app/](https://project1-app-khaki.vercel.app/)
