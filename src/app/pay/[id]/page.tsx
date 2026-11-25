@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Invoice } from "@/lib/types";
 import { initialInvoices } from "@/lib/mock-data";
 import { useLanguage } from "@/context/LanguageContext";
+import { formatRupiah } from "@/lib/format-currency";
 import {
   CreditCard,
   Building2,
@@ -186,7 +187,7 @@ export default function PublicPaymentPage() {
                 {t("paySuccessTitle")}
               </span>
               <h2 className="text-2xl font-black text-white mt-3 font-mono">
-                ${invoice.total.toLocaleString()} {invoice.currency}
+                {formatRupiah(invoice.total)}
               </h2>
               <p className="text-xs text-slate-400 mt-1">
                 {t("paySuccessMsg")} <strong>#{invoice.invoiceNumber}</strong>
@@ -245,7 +246,7 @@ export default function PublicPaymentPage() {
                     <span className="text-slate-300 font-medium">
                       {item.description} <span className="text-slate-500">×{item.quantity}</span>
                     </span>
-                    <span className="font-mono text-white shrink-0">${item.amount.toLocaleString()}</span>
+                    <span className="font-mono text-white shrink-0">{formatRupiah(item.amount)}</span>
                   </div>
                 ))}
               </div>
@@ -253,16 +254,16 @@ export default function PublicPaymentPage() {
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between text-slate-400">
                   <span>{t("modalSubtotal")}</span>
-                  <span className="font-mono">${invoice.subtotal.toLocaleString()}</span>
+                  <span className="font-mono">{formatRupiah(invoice.subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>{t("modalTax")} ({invoice.taxRate}%)</span>
-                  <span className="font-mono">${invoice.taxAmount.toLocaleString()}</span>
+                  <span className="font-mono">{formatRupiah(invoice.taxAmount)}</span>
                 </div>
                 <div className="flex justify-between font-black text-lg text-white pt-2 border-t border-slate-800">
                   <span>{t("modalGrandTotal")}</span>
                   <span className="font-mono text-brand-400">
-                    ${invoice.total.toLocaleString()} {invoice.currency}
+                    {formatRupiah(invoice.total)}
                   </span>
                 </div>
               </div>
@@ -396,7 +397,7 @@ export default function PublicPaymentPage() {
                     ) : (
                       <>
                         <Lock className="w-4 h-4" />
-                        <span>{t("payBtnPay")} ${invoice.total.toLocaleString()} {invoice.currency}</span>
+                        <span>{t("payBtnPay")} {formatRupiah(invoice.total)}</span>
                       </>
                     )}
                   </button>
@@ -421,8 +422,8 @@ export default function PublicPaymentPage() {
                     </div>
                     <p className="text-[11px] text-slate-400 leading-relaxed">
                       {lang === "id"
-                        ? `Transfer tepat sebesar $${invoice.total.toLocaleString()} ${invoice.currency}. Pembayaran Anda akan diverifikasi otomatis.`
-                        : `Transfer exact amount $${invoice.total.toLocaleString()} ${invoice.currency}. Your payment will be verified automatically.`}
+                        ? `Transfer tepat sebesar ${formatRupiah(invoice.total)}. Pembayaran Anda akan diverifikasi otomatis.`
+                        : `Transfer exact amount ${formatRupiah(invoice.total)}. Your payment will be verified automatically.`}
                     </p>
                   </div>
 

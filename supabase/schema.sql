@@ -12,10 +12,10 @@ create table if not exists public.invoices (
   due_date date not null,
   status text not null check (status in ('PAID', 'PENDING', 'OVERDUE', 'DRAFT')),
   subtotal numeric not null default 0,
-  tax_rate numeric not null default 10,
+  tax_rate numeric not null default 11,
   tax_amount numeric not null default 0,
   total numeric not null default 0,
-  currency text not null default 'USD',
+  currency text not null default 'IDR',
   notes text,
   items jsonb not null default '[]'::jsonb,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
@@ -36,7 +36,7 @@ create policy "Allow public read-write for showcase demo"
   using (true)
   with check (true);
 
--- 4. Initial Seed Data (Realistic B2B Portfolio Data)
+-- 4. Initial Seed Data (Realistic B2B Portfolio Data in IDR)
 insert into public.invoices (id, invoice_number, client_name, client_email, issue_date, due_date, status, subtotal, tax_rate, tax_amount, total, currency, notes, items)
 values
   (
@@ -47,13 +47,13 @@ values
     '2026-11-10',
     '2026-12-10',
     'PAID',
-    4200,
-    10,
-    420,
-    4620,
-    'USD',
-    'Payment received via Stripe Instant ACH.',
-    '[{"id":"item-1","description":"Cloud Infrastructure Migration & Terraform Orchestration","quantity":1,"rate":3000,"amount":3000},{"id":"item-2","description":"PostgreSQL Query Optimization & High-Availability Audit","quantity":8,"rate":150,"amount":1200}]'::jsonb
+    63000000,
+    11,
+    6930000,
+    69930000,
+    'IDR',
+    'Pembayaran diterima via transfer BCA Instant.',
+    '[{"id":"item-1","description":"Cloud Infrastructure Migration & Terraform Orchestration","quantity":1,"rate":45000000,"amount":45000000},{"id":"item-2","description":"PostgreSQL Query Optimization & High-Availability Audit","quantity":8,"rate":2250000,"amount":18000000}]'::jsonb
   ),
   (
     'inv-002',
@@ -63,13 +63,13 @@ values
     '2026-11-15',
     '2026-11-30',
     'PENDING',
-    7500,
-    10,
-    750,
-    8250,
-    'USD',
-    'Net 15 terms. Wire transfer instructions attached.',
-    '[{"id":"item-3","description":"Custom Next.js 15 Design System & Micro-Interactions","quantity":1,"rate":5500,"amount":5500},{"id":"item-4","description":"Interactive 3D WebGL Hero Canvas Implementation","quantity":1,"rate":2000,"amount":2000}]'::jsonb
+    112500000,
+    11,
+    12375000,
+    124875000,
+    'IDR',
+    'Jatuh tempo Net 15. Instruksi transfer bank terlampir.',
+    '[{"id":"item-3","description":"Custom Next.js 15 Design System & Micro-Interactions","quantity":1,"rate":82500000,"amount":82500000},{"id":"item-4","description":"Interactive 3D WebGL Hero Canvas Implementation","quantity":1,"rate":30000000,"amount":30000000}]'::jsonb
   ),
   (
     'inv-003',
@@ -79,13 +79,13 @@ values
     '2026-10-01',
     '2026-10-31',
     'OVERDUE',
-    3100,
-    10,
-    310,
-    3410,
-    'USD',
-    'Second reminder sent on Nov 15.',
-    '[{"id":"item-5","description":"Laboratory Telemetry Dashboard API & Event Gateway","quantity":1,"rate":3100,"amount":3100}]'::jsonb
+    46500000,
+    11,
+    5115000,
+    51615000,
+    'IDR',
+    'Pengingat kedua dikirim 15 November.',
+    '[{"id":"item-5","description":"Laboratory Telemetry Dashboard API & Event Gateway","quantity":1,"rate":46500000,"amount":46500000}]'::jsonb
   ),
   (
     'inv-004',
@@ -95,13 +95,13 @@ values
     '2026-11-22',
     '2026-12-22',
     'DRAFT',
-    9600,
-    10,
-    960,
-    10560,
-    'USD',
-    'Draft awaiting SOW final sign-off.',
-    '[{"id":"item-6","description":"Vector Database Embedding Pipeline & LLM RAG Tuning","quantity":1,"rate":8000,"amount":8000},{"id":"item-7","description":"Automated Evaluation Benchmark Suite","quantity":1,"rate":1600,"amount":1600}]'::jsonb
+    144000000,
+    11,
+    15840000,
+    159840000,
+    'IDR',
+    'Draf menunggu penandatanganan SOW final.',
+    '[{"id":"item-6","description":"Vector Database Embedding Pipeline & LLM RAG Tuning","quantity":1,"rate":120000000,"amount":120000000},{"id":"item-7","description":"Automated Evaluation Benchmark Suite","quantity":1,"rate":24000000,"amount":24000000}]'::jsonb
   ),
   (
     'inv-005',
@@ -111,12 +111,12 @@ values
     '2026-11-05',
     '2026-11-20',
     'PAID',
-    12400,
-    10,
-    1240,
-    13640,
-    'USD',
-    'Annual retainer - Q4 settlement.',
-    '[{"id":"item-8","description":"Full-Stack E-commerce Performance Optimization","quantity":1,"rate":9400,"amount":9400},{"id":"item-9","description":"Dedicated SLA Incident Response (November)","quantity":1,"rate":3000,"amount":3000}]'::jsonb
+    186000000,
+    11,
+    20460000,
+    206460000,
+    'IDR',
+    'Retainer tahunan - pelunasan Q4.',
+    '[{"id":"item-8","description":"Full-Stack E-commerce Performance Optimization","quantity":1,"rate":141000000,"amount":141000000},{"id":"item-9","description":"Dedicated SLA Incident Response (November)","quantity":1,"rate":45000000,"amount":45000000}]'::jsonb
   )
 on conflict (invoice_number) do nothing;

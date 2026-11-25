@@ -174,8 +174,8 @@ export default function DashboardPage() {
       await handleToggleStatus(target.id);
       showToast(
         lang === "id"
-          ? `⚡ Webhook Diterima: Tagihan ${target.invoiceNumber} lunas ($${target.total.toLocaleString()} USD)!`
-          : `⚡ Webhook Verified: ${target.invoiceNumber} settled ($${target.total.toLocaleString()} USD)!`
+          ? `⚡ Webhook Diterima: Tagihan ${target.invoiceNumber} lunas (Rp ${target.total.toLocaleString("id-ID")})!`
+          : `⚡ Webhook Verified: ${target.invoiceNumber} settled (Rp ${target.total.toLocaleString("id-ID")})!`
       );
     } else {
       showToast(

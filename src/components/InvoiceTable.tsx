@@ -342,11 +342,8 @@ export function InvoiceTable({
                     <td className="py-4 px-4 text-slate-600 dark:text-slate-300 font-mono text-xs">
                       {inv.dueDate}
                     </td>
-                    <td className="py-4 px-4 font-bold text-slate-900 dark:text-slate-100 font-mono">
-                      ${inv.total.toLocaleString()}
-                      <span className="text-[11px] font-normal text-slate-400 ml-1">
-                        {inv.currency}
-                      </span>
+                    <td className="py-4 px-4 font-bold text-slate-900 dark:text-slate-100 font-mono text-sm">
+                      Rp {inv.total.toLocaleString("id-ID")}
                     </td>
                     <td className="py-4 px-4">
                       <button

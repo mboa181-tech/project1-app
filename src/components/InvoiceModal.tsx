@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Invoice, InvoiceItem } from "@/lib/types";
 import { useLanguage } from "@/context/LanguageContext";
+import { formatRupiah } from "@/lib/format-currency";
 import { X, Plus, Trash2, CheckCircle2, DollarSign, Calculator, Calendar } from "lucide-react";
 
 interface InvoiceModalProps {
@@ -15,12 +16,12 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
   const { t, lang } = useLanguage();
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState("IDR");
   const [dueDate, setDueDate] = useState("2026-12-31");
-  const [taxRate, setTaxRate] = useState(10);
+  const [taxRate, setTaxRate] = useState(11);
   const [notes, setNotes] = useState(lang === "id" ? "Pembayaran jatuh tempo sesuai syarat perjanjian." : "Payment due within net terms.");
   const [items, setItems] = useState<InvoiceItem[]>([
-    { id: "1", description: lang === "id" ? "Sprint Pengembangan Full-Stack" : "Full-Stack Development Sprint", quantity: 1, rate: 3500, amount: 3500 },
+    { id: "1", description: lang === "id" ? "Sprint Pengembangan Full-Stack" : "Full-Stack Development Sprint", quantity: 1, rate: 52500000, amount: 52500000 },
   ]);
 
   useEffect(() => {
@@ -51,8 +52,8 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
         id: String(Date.now()),
         description: lang === "id" ? "Integrasi API & Optimasi Infrastruktur" : "API Integration & Infrastructure Tuning",
         quantity: 1,
-        rate: 1500,
-        amount: 1500,
+        rate: 22500000,
+        amount: 22500000,
       },
     ]);
   };
@@ -161,9 +162,9 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
                 onChange={(e) => setCurrency(e.target.value)}
                 className="w-full px-3.5 py-2.5 rounded-xl text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-brand-500/50 outline-none transition-all"
               >
+                <option value="IDR">IDR (Rp)</option>
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
-                <option value="IDR">IDR (Rp)</option>
                 <option value="GBP">GBP (£)</option>
               </select>
             </div>
@@ -276,16 +277,16 @@ export function InvoiceModal({ isOpen, onClose, onCreate }: InvoiceModalProps) {
           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-sm space-y-2">
             <div className="flex justify-between text-slate-500 dark:text-slate-400">
               <span>{t("modalSubtotal")}</span>
-              <span className="font-mono">${subtotal.toLocaleString()}</span>
+              <span className="font-mono">{formatRupiah(subtotal)}</span>
             </div>
             <div className="flex justify-between text-slate-500 dark:text-slate-400">
               <span>{t("modalTax")} ({taxRate}%)</span>
-              <span className="font-mono">${taxAmount.toLocaleString()}</span>
+              <span className="font-mono">{formatRupiah(taxAmount)}</span>
             </div>
             <div className="flex justify-between font-black text-base text-slate-900 dark:text-slate-100 pt-2 border-t border-slate-200 dark:border-slate-800">
               <span>{t("modalGrandTotal")}</span>
               <span className="font-mono text-brand-600 dark:text-brand-400">
-                ${total.toLocaleString()} {currency}
+                {formatRupiah(total)}
               </span>
             </div>
           </div>

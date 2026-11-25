@@ -20,6 +20,7 @@ import {
   FileText,
   ExternalLink,
 } from "lucide-react";
+import { formatRupiah } from "@/lib/format-currency";
 import Link from "next/link";
 
 interface ClientRecord {
@@ -185,7 +186,7 @@ export default function ClientsPage() {
               {t("crmAvgLtv")}
             </span>
             <div className="text-3xl font-black tracking-tight text-brand-600 dark:text-brand-400 font-mono">
-              ${avgLtv.toLocaleString()}
+              {formatRupiah(avgLtv)}
             </div>
             <p className="text-xs text-slate-400 mt-1">
               {lang === "id" ? "Rata-rata akumulasi pengeluaran" : "Weighted cumulative spend"}
@@ -197,7 +198,7 @@ export default function ClientsPage() {
               {t("crmGrossInvoiced")}
             </span>
             <div className="text-3xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 font-mono">
-              ${totalBilledAll.toLocaleString()}
+              {formatRupiah(totalBilledAll)}
             </div>
             <p className="text-xs text-slate-400 mt-1">
               {lang === "id" ? "Total kontrak yang dieksekusi" : "Gross contracts executed"}
@@ -259,19 +260,19 @@ export default function ClientsPage() {
                   <div>
                     <span className="text-slate-400 block text-[11px]">{t("crmCumulativeBilled")}</span>
                     <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                      ${client.totalBilled.toLocaleString()}
+                      {formatRupiah(client.totalBilled)}
                     </span>
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[11px]">{t("crmPendingBalance")}</span>
                     <span className="font-mono font-bold text-amber-500">
-                      ${client.totalPending.toLocaleString()}
+                      {formatRupiah(client.totalPending)}
                     </span>
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[11px]">{t("crmSettledFunds")}</span>
                     <span className="font-mono font-bold text-emerald-500">
-                      ${client.totalPaid.toLocaleString()}
+                      {formatRupiah(client.totalPaid)}
                     </span>
                   </div>
                   <div>

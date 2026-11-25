@@ -3,6 +3,7 @@
 import React from "react";
 import { Invoice } from "@/lib/types";
 import { useLanguage } from "@/context/LanguageContext";
+import { formatRupiah } from "@/lib/format-currency";
 import {
   DollarSign,
   Clock,
@@ -39,7 +40,7 @@ export function StatsOverview({ invoices }: StatsOverviewProps) {
   const stats = [
     {
       title: t("statSettled"),
-      amount: `$${totalRevenue.toLocaleString()}`,
+      amount: formatRupiah(totalRevenue),
       subtitle: `${paidCount} ${t("statSettledSub")}`,
       icon: DollarSign,
       color: "text-emerald-500 dark:text-emerald-400",
@@ -52,7 +53,7 @@ export function StatsOverview({ invoices }: StatsOverviewProps) {
     },
     {
       title: t("statPending"),
-      amount: `$${pendingAmount.toLocaleString()}`,
+      amount: formatRupiah(pendingAmount),
       subtitle: `${pendingCount} ${t("statPendingSub")}`,
       icon: Clock,
       color: "text-amber-500 dark:text-amber-400",
@@ -65,7 +66,7 @@ export function StatsOverview({ invoices }: StatsOverviewProps) {
     },
     {
       title: t("statOverdue"),
-      amount: `$${overdueAmount.toLocaleString()}`,
+      amount: formatRupiah(overdueAmount),
       subtitle: `${overdueCount} ${t("statOverdueSub")}`,
       icon: AlertTriangle,
       color: "text-rose-500 dark:text-rose-400",
@@ -117,7 +118,7 @@ export function StatsOverview({ invoices }: StatsOverviewProps) {
             </div>
 
             <div className="flex items-baseline justify-between mb-1.5">
-              <div className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-50 font-mono">
+              <div className="text-xl font-black tracking-tight text-slate-900 dark:text-slate-50 font-mono">
                 {stat.amount}
               </div>
               <span

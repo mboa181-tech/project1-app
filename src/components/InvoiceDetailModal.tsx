@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Invoice } from "@/lib/types";
 import { useLanguage } from "@/context/LanguageContext";
+import { formatRupiah } from "@/lib/format-currency";
 import {
   X,
   Printer,
@@ -141,8 +142,8 @@ export function InvoiceDetailModal({
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                100 Innovation Parkway, Suite 400<br />
-                San Francisco, CA 94103 • billing@flowdesk.app
+                Jl. Sudirman No. 100, Suite 400<br />
+                Jakarta Selatan 12190 • billing@flowdesk.app
               </p>
             </div>
 
@@ -178,7 +179,7 @@ export function InvoiceDetailModal({
                 Due: {invoice.dueDate}
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Electronic ACH / Wire Transfer / QRIS
+                Transfer Bank / Virtual Account / QRIS
               </p>
             </div>
           </div>
@@ -203,11 +204,11 @@ export function InvoiceDetailModal({
                     <td className="py-3.5 px-2 text-center text-slate-600 dark:text-slate-400 font-mono">
                       {item.quantity}
                     </td>
-                    <td className="py-3.5 px-2 text-right text-slate-600 dark:text-slate-400 font-mono">
-                      ${item.rate.toLocaleString()}
+                    <td className="py-3.5 px-2 text-right text-slate-600 dark:text-slate-400 font-mono text-xs">
+                      {formatRupiah(item.rate)}
                     </td>
-                    <td className="py-3.5 pl-4 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
-                      ${item.amount.toLocaleString()}
+                    <td className="py-3.5 pl-4 text-right font-mono font-bold text-slate-900 dark:text-slate-100 text-xs">
+                      {formatRupiah(item.amount)}
                     </td>
                   </tr>
                 ))}
@@ -220,16 +221,16 @@ export function InvoiceDetailModal({
             <div className="w-72 space-y-2.5 text-sm">
               <div className="flex justify-between text-slate-500 dark:text-slate-400">
                 <span>{t("detailSubtotal")}</span>
-                <span className="font-mono font-semibold">${invoice.subtotal.toLocaleString()}</span>
+                <span className="font-mono font-semibold">{formatRupiah(invoice.subtotal)}</span>
               </div>
               <div className="flex justify-between text-slate-500 dark:text-slate-400">
                 <span>{t("modalTax")} ({invoice.taxRate}%)</span>
-                <span className="font-mono">${invoice.taxAmount.toLocaleString()}</span>
+                <span className="font-mono">{formatRupiah(invoice.taxAmount)}</span>
               </div>
               <div className="flex justify-between font-black text-lg text-slate-900 dark:text-slate-50 pt-2 border-t border-slate-200 dark:border-slate-800">
                 <span>{t("detailTotalDue")}</span>
                 <span className="font-mono text-brand-600 dark:text-brand-400">
-                  ${invoice.total.toLocaleString()} {invoice.currency}
+                  {formatRupiah(invoice.total)}
                 </span>
               </div>
             </div>
@@ -242,9 +243,9 @@ export function InvoiceDetailModal({
                 <CreditCard className="w-3.5 h-3.5 text-brand-500" /> {t("detailRemittance")}
               </span>
               <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
-                Bank: Silicon Valley Commercial Bank / BCA<br />
-                Routing (ABA): 121000358 • Account: 9840291039<br />
-                Beneficiary: FlowDesk Operations Inc.
+                Bank: BCA / Mandiri / BNI<br />
+                No. Rekening: 1234567890<br />
+                Atas Nama: PT FlowDesk Operations Indonesia
               </p>
             </div>
             <div>
