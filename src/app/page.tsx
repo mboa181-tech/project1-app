@@ -14,7 +14,6 @@ import {
   ShieldCheck,
   Zap,
   Sparkles,
-  Database,
   ExternalLink,
   Github,
   Plus,
@@ -29,8 +28,6 @@ export default function DashboardPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [isDbModalOpen, setIsDbModalOpen] = useState(false);
-  const [dbSource, setDbSource] = useState<string>("loading");
   const [isLoading, setIsLoading] = useState(true);
 
   const currentUser = initialDemoUsers[currentUserIndex];
@@ -51,7 +48,6 @@ export default function DashboardPage() {
           const data = await res.json();
           if (data.invoices && data.invoices.length > 0) {
             setInvoices(data.invoices);
-            setDbSource(data.source === "supabase" ? "Supabase PostgreSQL" : "Cloud API Persistence");
             return;
           }
         }
@@ -65,7 +61,6 @@ export default function DashboardPage() {
         const local = localStorage.getItem("flowdesk_invoices_v1");
         if (local) {
           setInvoices(JSON.parse(local));
-          setDbSource("Local Storage Backup");
         }
       } catch (e) {}
     }
@@ -212,13 +207,6 @@ export default function DashboardPage() {
               <span className="text-[11px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-500/10 border border-brand-500/20 px-2.5 py-0.5 rounded-full">
                 {t("dashWorkspace")}
               </span>
-              <button
-                onClick={() => setIsDbModalOpen(true)}
-                className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full hover:bg-emerald-500/20 transition-colors cursor-pointer"
-              >
-                <Database className="w-3 h-3" />
-                <span>{dbSource || "PostgreSQL Ready"}</span>
-              </button>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
               {t("dashTitle")}
@@ -229,14 +217,6 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              onClick={() => setIsDbModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
-            >
-              <Database className="w-3.5 h-3.5 text-brand-500" />
-              <span>{t("dashDbConfig")}</span>
-            </button>
-
             <button
               onClick={handleSimulateWebhook}
               title="Simulasikan penerimaan webhook pembayaran"
@@ -265,69 +245,6 @@ export default function DashboardPage() {
           onDeleteInvoice={handleDeleteInvoice}
         />
       </main>
-
-      {/* Database Setup Modal */}
-      {isDbModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-[#0e1424] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-xl w-full p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                  <Database className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-base text-slate-900 dark:text-white">
-                    {lang === "id" ? "Arsitektur Database Cloud" : "Cloud Database Architecture"}
-                  </h3>
-                  <p className="text-xs text-slate-400">PostgreSQL / Supabase Integration</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsDbModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-200"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300">
-              <p>
-                FlowDesk mendukung <strong>PostgreSQL permanen</strong> secara instan melalui Supabase atau Neon:
-              </p>
-
-              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2">
-                <span className="font-bold text-brand-600 dark:text-brand-400 block">
-                  {lang === "id" ? "Langkah Menghubungkan Supabase Gratis (2 Menit):" : "Connecting Free Supabase (2 Minutes):"}
-                </span>
-                <ol className="list-decimal pl-4 space-y-1 text-slate-500 dark:text-slate-400">
-                  <li>Buat proyek baru di <strong>supabase.com</strong> (Free tier).</li>
-                  <li>Buka menu <strong>SQL Editor</strong>, lalu jalankan script dari <code>supabase/schema.sql</code>.</li>
-                  <li>Buka <strong>Project Settings ➔ API</strong>, copy <code>Project URL</code> dan <code>anon public key</code>.</li>
-                  <li>Masukkan ke Vercel Environment Variables:
-                    <ul className="list-disc pl-4 mt-1 font-mono text-[11px] text-slate-400">
-                      <li><code>NEXT_PUBLIC_SUPABASE_URL</code></li>
-                      <li><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></li>
-                    </ul>
-                  </li>
-                </ol>
-              </div>
-
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px]">
-                ✓ <strong>Status Saat Ini:</strong> Data Anda tersimpan secara otomatis melalui REST API & Persistent State. Begitu environment variables Supabase ditambahkan, sistem otomatis beralih ke cloud PostgreSQL tanpa downtime!
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setIsDbModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 text-white hover:bg-brand-700 transition-colors"
-              >
-                {lang === "id" ? "Tutup & Mengerti" : "Close & Got it"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <InvoiceModal
         isOpen={isCreateOpen}
