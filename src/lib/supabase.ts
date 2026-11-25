@@ -3,7 +3,11 @@ import { Invoice } from "./types";
 import { initialInvoices } from "./mock-data";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabaseAnonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ||
+  "";
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
@@ -31,7 +35,7 @@ export function mapFromDb(row: any): Invoice {
     taxRate: Number(row.tax_rate),
     taxAmount: Number(row.tax_amount),
     total: Number(row.total),
-    currency: row.currency || "USD",
+    currency: row.currency || "IDR",
     notes: row.notes,
     items: typeof row.items === "string" ? JSON.parse(row.items) : row.items || [],
   };
