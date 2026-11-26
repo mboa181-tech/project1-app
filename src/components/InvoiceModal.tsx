@@ -175,9 +175,10 @@ export function InvoiceModal({
       return;
     }
 
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const newInvoice: Invoice = {
-      id: `inv-${Date.now().toString().slice(-4)}`,
-      invoiceNumber: `INV-2026-${Math.floor(100 + Math.random() * 900)}`,
+      id: `inv-${Date.now()}-${randomSuffix}`,
+      invoiceNumber: `INV-2026-${randomSuffix}`,
       clientName,
       clientEmail,
       issueDate: new Date().toISOString().split("T")[0],

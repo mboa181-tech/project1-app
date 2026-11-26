@@ -91,12 +91,29 @@ export default function ClientsPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleCreateInvoice = (newInvoice: Invoice) => {
-    setInvoices([newInvoice, ...invoices]);
+  const handleCreateInvoice = async (newInvoice: Invoice) => {
+    setInvoices((prev) => [newInvoice, ...prev]);
     try {
       localStorage.setItem("flowdesk_invoices_v1", JSON.stringify([newInvoice, ...invoices]));
     } catch {}
-    showToast(`Invoice ${newInvoice.invoiceNumber} berhasil disimpan!`);
+    showToast(`Invoice ${newInvoice.invoiceNumber} sedang disimpan...`);
+
+    try {
+      const res = await fetch("/api/invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newInvoice),
+      });
+      if (res.ok) {
+        showToast(`Invoice ${newInvoice.invoiceNumber} tersimpan di Supabase!`);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        showToast(`Gagal simpan: ${errData.error || "Kesalahan database"}`);
+      }
+    } catch (err: any) {
+      console.error("API error:", err);
+      showToast(`Gagal koneksi: ${err.message}`);
+    }
   };
 
   const clientsMap: { [email: string]: ClientRecord } = {};
@@ -579,10 +596,13 @@ export default function ClientsPage() {
       <InvoiceDetailModal
         invoice={selectedInvoiceForDetail}
         onClose={() => setSelectedInvoiceForDetail(null)}
-        onToggleStatus={(id) => {
+        onToggleStatus={async (id) => {
+          const target = invoices.find((i) => i.id === id);
+          if (!target) return;
+          const newStatus = target.status === "PAID" ? "PENDING" : "PAID";
           const updated = invoices.map((i) =>
             i.id === id
-              ? { ...i, status: (i.status === "PAID" ? "PENDING" : "PAID") as any }
+              ? { ...i, status: newStatus as any }
               : i
           );
           setInvoices(updated);
@@ -590,9 +610,19 @@ export default function ClientsPage() {
             localStorage.setItem("flowdesk_invoices_v1", JSON.stringify(updated));
           } catch {}
           setSelectedInvoiceForDetail((prev) =>
-            prev ? { ...prev, status: prev.status === "PAID" ? "PENDING" : "PAID" } : null
+            prev ? { ...prev, status: newStatus } : null
           );
-          showToast("Status invoice berhasil diperbarui!");
+          showToast(`Status invoice diperbarui ke ${newStatus}`);
+
+          try {
+            await fetch("/api/invoices", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id, status: newStatus }),
+            });
+          } catch (err) {
+            console.error("Failed to sync invoice status:", err);
+          }
         }}
       />
 

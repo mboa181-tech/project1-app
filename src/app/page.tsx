@@ -118,6 +118,9 @@ export default function DashboardPage() {
       });
       if (res.ok) {
         showToast(`Tagihan ${newInvoice.invoiceNumber} disimpan ke Supabase.`);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        showToast(`Gagal simpan ke Supabase: ${errData.error || "Server error"}`);
       }
     } catch (err) {
       console.error("API error:", err);
