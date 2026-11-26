@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Invoice, DemoUser } from "@/lib/types";
 import { initialInvoices, initialDemoUsers } from "@/lib/mock-data";
 import { InvoiceModal } from "@/components/InvoiceModal";
+import { InvoiceDetailModal } from "@/components/InvoiceDetailModal";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -22,6 +23,8 @@ import {
   Moon,
   Sun,
   Globe,
+  X,
+  Copy,
 } from "lucide-react";
 import { formatRupiah } from "@/lib/format-currency";
 import Link from "next/link";
@@ -48,6 +51,9 @@ export default function ClientsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [selectedClientForHistory, setSelectedClientForHistory] = useState<ClientRecord | null>(null);
+  const [selectedInvoiceForDetail, setSelectedInvoiceForDetail] = useState<Invoice | null>(null);
+  const [defaultClientForInvoice, setDefaultClientForInvoice] = useState<{ name: string; email: string } | null>(null);
 
   useEffect(() => {
     if (isDark) {
@@ -167,7 +173,10 @@ export default function ClientsPage() {
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             type="button"
-            onClick={() => setIsCreateOpen(true)}
+            onClick={() => {
+              setDefaultClientForInvoice(null);
+              setIsCreateOpen(true);
+            }}
             className="glass-btn-primary px-3.5 sm:px-4 py-2 text-xs"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -347,21 +356,29 @@ export default function ClientsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-1">
-                  <Link
-                    href={`/?client=${encodeURIComponent(client.name)}`}
-                    className="text-xs font-bold text-[var(--gd-primary)] hover:underline flex items-center gap-1"
+                <div className="flex items-center justify-between pt-2 border-t border-[var(--gd-line)]/50 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedClientForHistory(client)}
+                    className="text-xs font-bold text-[var(--gd-teal)] hover:underline flex items-center gap-1.5 transition-colors"
+                    title="Buka riwayat dan daftar invoice klien ini"
                   >
-                    <span>{t("crmViewInvoices")}</span>
-                    <ArrowUpRight className="w-3.5 h-3.5" />
-                  </Link>
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>Riwayat Tagihan ({client.invoiceCount})</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-70" />
+                  </button>
 
                   <button
                     type="button"
-                    onClick={() => setIsCreateOpen(true)}
-                    className="glass-btn-secondary px-3.5 py-1.5 text-xs font-bold"
+                    onClick={() => {
+                      setDefaultClientForInvoice({ name: client.name, email: client.email });
+                      setIsCreateOpen(true);
+                    }}
+                    className="glass-btn-secondary px-3 py-1.5 text-xs font-bold flex items-center gap-1 shrink-0 hover:border-[var(--gd-teal)] transition-colors"
+                    title={`Buat tagihan baru otomatis terisi untuk ${client.name}`}
                   >
-                    {t("crmInvoiceClient")}
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Tagih Klien</span>
                   </button>
                 </div>
               </div>
@@ -382,10 +399,212 @@ export default function ClientsPage() {
         )}
       </main>
 
+      {/* Modal Riwayat Tagihan Klien */}
+      {selectedClientForHistory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative w-full max-w-3xl glass-modal rounded-3xl p-5 sm:p-7 shadow-2xl border border-[var(--gd-rim)] max-h-[90vh] flex flex-col overflow-hidden">
+            {/* Header Profil Klien */}
+            <div className="flex items-start justify-between pb-4 border-b border-[var(--gd-line)]">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-12 h-12 rounded-2xl bg-[var(--gd-pick)] text-[var(--gd-pick-ink)] flex items-center justify-center font-black text-base shadow-sm shrink-0">
+                  {selectedClientForHistory.name
+                    .split(" ")
+                    .map((w) => w[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-lg sm:text-xl font-extrabold text-[var(--gd-ink)] truncate">
+                      {selectedClientForHistory.name}
+                    </h2>
+                    <span
+                      className={`text-[10px] uppercase font-extrabold px-2.5 py-0.5 rounded-full border ${
+                        selectedClientForHistory.hasOverdue
+                          ? "bg-[color-mix(in_srgb,var(--gd-coral)_18%,transparent)] text-[var(--gd-coral)] border-[color-mix(in_srgb,var(--gd-coral)_35%,transparent)]"
+                          : "bg-[color-mix(in_srgb,var(--gd-teal)_18%,transparent)] text-[var(--gd-teal)] border-[color-mix(in_srgb,var(--gd-teal)_35%,transparent)]"
+                      }`}
+                    >
+                      {selectedClientForHistory.hasOverdue
+                        ? "Perlu Tindak Lanjut"
+                        : "Akun Sehat"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--gd-muted)] truncate mt-0.5">
+                    {selectedClientForHistory.email}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedClientForHistory(null)}
+                className="glass-icon-btn p-2 rounded-full"
+                title="Tutup"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Ringkasan Keuangan Klien */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 py-4 border-b border-[var(--gd-line)]">
+              <div className="p-3 rounded-2xl glass-panel-sub">
+                <span className="text-[10px] text-[var(--gd-muted)] block font-bold">TOTAL TAGIHAN</span>
+                <span className="text-xs sm:text-sm font-black font-mono text-[var(--gd-ink)]">
+                  {formatRupiah(selectedClientForHistory.totalBilled)}
+                </span>
+              </div>
+              <div className="p-3 rounded-2xl glass-panel-sub">
+                <span className="text-[10px] text-[var(--gd-muted)] block font-bold">SUDAH DITERIMA</span>
+                <span className="text-xs sm:text-sm font-black font-mono text-[var(--gd-teal)]">
+                  {formatRupiah(selectedClientForHistory.totalPaid)}
+                </span>
+              </div>
+              <div className="p-3 rounded-2xl glass-panel-sub">
+                <span className="text-[10px] text-[var(--gd-muted)] block font-bold">PENDING / PIUTANG</span>
+                <span className="text-xs sm:text-sm font-black font-mono text-[var(--gd-ochre)]">
+                  {formatRupiah(selectedClientForHistory.totalPending)}
+                </span>
+              </div>
+              <div className="p-3 rounded-2xl glass-panel-sub">
+                <span className="text-[10px] text-[var(--gd-muted)] block font-bold">JUMLAH KONTRAK</span>
+                <span className="text-xs sm:text-sm font-black font-mono text-[var(--gd-ink)]">
+                  {selectedClientForHistory.invoiceCount} Invoice
+                </span>
+              </div>
+            </div>
+
+            {/* Daftar Tagihan Klien */}
+            <div className="flex-1 overflow-y-auto py-4 space-y-3 pr-1">
+              <div className="flex items-center justify-between pb-1">
+                <h3 className="text-xs font-black uppercase tracking-wider text-[var(--gd-muted)]">
+                  Daftar Faktur & Riwayat Tagihan
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDefaultClientForInvoice({
+                      name: selectedClientForHistory.name,
+                      email: selectedClientForHistory.email,
+                    });
+                    setIsCreateOpen(true);
+                  }}
+                  className="glass-btn-primary px-3 py-1.5 text-xs font-bold flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Buat Tagihan Baru</span>
+                </button>
+              </div>
+
+              {invoices
+                .filter(
+                  (inv) =>
+                    inv.clientEmail.toLowerCase() ===
+                    selectedClientForHistory.email.toLowerCase()
+                )
+                .map((inv) => (
+                  <div
+                    key={inv.id}
+                    className="p-3.5 sm:p-4 rounded-2xl glass-panel-sub flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-[var(--gd-rim)] transition-all"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <strong className="text-sm font-black text-[var(--gd-ink)]">
+                          {inv.invoiceNumber}
+                        </strong>
+                        <span
+                          className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                            inv.status === "PAID"
+                              ? "bg-[color-mix(in_srgb,var(--gd-teal)_20%,transparent)] text-[var(--gd-teal)]"
+                              : inv.status === "OVERDUE"
+                              ? "bg-[color-mix(in_srgb,var(--gd-coral)_20%,transparent)] text-[var(--gd-coral)]"
+                              : "bg-[color-mix(in_srgb,var(--gd-ochre)_20%,transparent)] text-[var(--gd-ochre)]"
+                          }`}
+                        >
+                          {inv.status === "PAID"
+                            ? "LUNAS"
+                            : inv.status === "OVERDUE"
+                            ? "JATUH TEMPO"
+                            : "TERTUNDA"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-[var(--gd-muted)] mt-1">
+                        Jatuh Tempo: {inv.dueDate} • {inv.items.length} item pekerjaan
+                      </p>
+                      <div className="text-sm font-black font-mono text-[var(--gd-ink)] mt-1.5 sm:hidden">
+                        {formatRupiah(inv.total)}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-end sm:self-center">
+                      <div className="hidden sm:block text-right mr-2">
+                        <span className="text-[10px] text-[var(--gd-muted)] block">Nominal</span>
+                        <strong className="text-sm font-black font-mono text-[var(--gd-ink)]">
+                          {formatRupiah(inv.total)}
+                        </strong>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectedInvoiceForDetail(inv)}
+                        className="glass-btn-primary px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 shadow-sm"
+                        title="Buka Pratinjau & Cetak Nota Standar"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Lihat Nota</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const link = `${window.location.origin}/pay/${inv.id}`;
+                          navigator.clipboard.writeText(link);
+                          showToast(`Link pembayaran ${inv.invoiceNumber} disalin!`);
+                        }}
+                        className="glass-btn-secondary px-2.5 py-1.5 text-xs font-bold"
+                        title="Salin Link Pembayaran Klien"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Detail Nota / Faktur (Standard Nota Style) */}
+      <InvoiceDetailModal
+        invoice={selectedInvoiceForDetail}
+        onClose={() => setSelectedInvoiceForDetail(null)}
+        onToggleStatus={(id) => {
+          const updated = invoices.map((i) =>
+            i.id === id
+              ? { ...i, status: (i.status === "PAID" ? "PENDING" : "PAID") as any }
+              : i
+          );
+          setInvoices(updated);
+          try {
+            localStorage.setItem("flowdesk_invoices_v1", JSON.stringify(updated));
+          } catch {}
+          setSelectedInvoiceForDetail((prev) =>
+            prev ? { ...prev, status: prev.status === "PAID" ? "PENDING" : "PAID" } : null
+          );
+          showToast("Status invoice berhasil diperbarui!");
+        }}
+      />
+
+      {/* Modal Pembuatan Tagihan (Mendukung Auto-fill defaultClient) */}
       <InvoiceModal
         isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
+        onClose={() => {
+          setIsCreateOpen(false);
+          setDefaultClientForInvoice(null);
+        }}
         onCreate={handleCreateInvoice}
+        defaultClient={defaultClientForInvoice}
       />
 
       <footer className="relative z-10 py-6 text-center text-xs text-[var(--gd-muted)] mt-8">

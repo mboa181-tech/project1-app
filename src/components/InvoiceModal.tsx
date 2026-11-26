@@ -24,6 +24,7 @@ interface InvoiceModalProps {
   onCreate: (invoice: Invoice) => void;
   editingInvoice?: Invoice | null;
   onUpdate?: (invoice: Invoice) => void;
+  defaultClient?: { name: string; email: string } | null;
 }
 
 export function InvoiceModal({
@@ -32,6 +33,7 @@ export function InvoiceModal({
   onCreate,
   editingInvoice,
   onUpdate,
+  defaultClient,
 }: InvoiceModalProps) {
   const { t, lang } = useLanguage();
   const isEditing = Boolean(editingInvoice);
@@ -72,8 +74,8 @@ export function InvoiceModal({
           : [{ id: "1", description: "", quantity: 1, rate: 0, amount: 0 }]
       );
     } else if (isOpen) {
-      setClientName("");
-      setClientEmail("");
+      setClientName(defaultClient?.name || "");
+      setClientEmail(defaultClient?.email || "");
       setCurrency("IDR");
       setDueDate("2026-12-31");
       setTaxRate(11);
@@ -95,7 +97,7 @@ export function InvoiceModal({
         },
       ]);
     }
-  }, [editingInvoice, isOpen, lang]);
+  }, [editingInvoice, isOpen, lang, defaultClient]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
