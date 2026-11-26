@@ -8,9 +8,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6_Strict-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL_%2B_Auth-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-v3.4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-000000?style=for-the-badge&logo=vercel)](https://project1-app-khaki.vercel.app/)
+[![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-000000?style=for-the-badge&logo=vercel)](https://flowdesk.aads.my.id/)
 
-[🌐 View Live Production Demo](https://project1-app-khaki.vercel.app/) • [🔐 Login Portal](https://project1-app-khaki.vercel.app/login) • [📖 GitHub Repository](https://github.com/mboa181-tech/project1-app)
+[🌐 View Live Production Demo](https://flowdesk.aads.my.id/) • [🔐 Login Portal](https://flowdesk.aads.my.id/login) • [📖 GitHub Repository](https://github.com/mboa181-tech/project1-app)
 
 </div>
 
