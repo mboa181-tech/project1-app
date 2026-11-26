@@ -538,41 +538,52 @@ const dashboardStyles = `
   .gd-command-grid > .gd-activity { grid-column: 1 / -1; }
 }
 @media (max-width: 760px) {
-  .gd-surround { padding-top: 11px; padding-bottom: calc(73px + env(safe-area-inset-bottom)); inline-size: calc(100% - 24px); }
-  .gd-top { grid-template-columns: minmax(0, 1fr) auto; padding: 7px 9px; gap: 6px 12px; border-radius: 21px; }
-  .gd-brand { padding-inline-start: 3px; }
-  .gd-ask { grid-area: 2 / 1 / 3 / -1; min-block-size: 41px; }
-  .gd-top-actions { grid-area: 1 / 2; }
-  .gd-top-actions .gd-icon-button { width: 41px; min-inline-size: 41px; min-block-size: 41px; }
+  .gd-surround { padding-top: 10px; padding-bottom: calc(85px + env(safe-area-inset-bottom)); inline-size: calc(100% - 20px); }
+  .gd-top { grid-template-columns: minmax(0, 1fr) auto; padding: 7px 10px; gap: 6px 8px; border-radius: 21px; overflow: hidden; }
+  .gd-brand { padding-inline-start: 2px; flex-shrink: 0; min-width: 0; }
+  .gd-brand strong { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 105px; }
+  .gd-brand small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 105px; }
+  .gd-ask { grid-area: 2 / 1 / 3 / -1; min-block-size: 39px; }
+  .gd-top-actions { grid-area: 1 / 2; gap: 4px; align-items: center; }
+  .gd-top-actions .gd-primary { display: none !important; }
+  .gd-top-actions .gd-icon-button { width: 35px; height: 35px; min-inline-size: 35px; min-block-size: 35px; }
+  .gd-top-actions .gd-icon-button svg { width: 15px; height: 15px; }
   .gd-stage { border-radius: 23px; }
-  .gd-stage-scroll { block-size: auto; padding: 15px 13px 17px; overflow: visible; }
-  .gd-view-head { align-items: flex-start; flex-direction: column; gap: 10px; margin-bottom: 14px; }
-  .gd-view-head p { font-size: 12px; margin-top: 6px; }
-  .gd-view-actions { justify-content: flex-start; }
-  .gd-command-grid, .gd-analytics-grid { grid-template-columns: minmax(0, 1fr); }
+  .gd-stage-scroll { block-size: auto; padding: 15px 12px calc(90px + env(safe-area-inset-bottom)); overflow: visible; }
+  .gd-view-head { align-items: flex-start; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .gd-view-head h1 { font-size: 26px; }
+  .gd-view-head p { font-size: 11.5px; margin-top: 4px; }
+  .gd-view-actions { justify-content: flex-start; width: 100%; }
+  .gd-view-actions .gd-export { width: 100%; justify-content: center; }
+  .gd-command-grid, .gd-analytics-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .gd-command-side, .gd-command-grid > .gd-activity { grid-column: 1; }
-  .gd-metric-grid, .gd-lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gd-metric-grid, .gd-lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .gd-dock-side { display: none; }
-  .gd-dock-bottom { position: fixed; inset: auto 11px calc(9px + env(safe-area-inset-bottom)); translate: none; justify-content: space-between; }
-  .gd-dock-bottom a { flex: 1; flex-direction: column; gap: 2px; padding: 3px 5px; min-block-size: 47px; line-height: 1.2; font-size: 9.5px; }
-  .gd-dock-bottom a svg { width: 15px; height: 15px; }
+  .gd-dock-bottom { position: fixed; inset: auto 8px calc(9px + env(safe-area-inset-bottom)); translate: none; justify-content: space-between; z-index: 40; }
+  .gd-dock-bottom a { flex: 1; flex-direction: column; gap: 2px; padding: 3px 4px; min-block-size: 46px; line-height: 1.2; font-size: 9px; }
+  .gd-dock-bottom a svg { width: 14px; height: 14px; }
   .gd-dock-bottom .gd-dock-text { display: none; }
   .gd-dock-bottom .gd-dock-short { display: inline; }
-  .gd-footer { padding-top: 9px; }
-  .gd-period button { min-block-size: 41px; }
-  .gd-primary, .gd-secondary { min-block-size: 44px; }
+  .gd-footer { padding-top: 9px; padding-bottom: calc(80px + env(safe-area-inset-bottom)); flex-direction: column; gap: 6px; text-align: center; }
+  .gd-period button { min-block-size: 38px; }
+  .gd-primary, .gd-secondary { min-block-size: 42px; }
+  .gd-table-scroll { max-inline-size: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .gd-table-scroll table { min-inline-size: 540px; }
 }
 @media (max-width: 420px) {
   .gd-panel { padding: 12px; }
-  .gd-metric { padding: 9px; }
-  .gd-summary { gap: 5px; padding: 5px; }
+  .gd-metric { padding: 9px; min-block-size: 96px; }
+  .gd-metric-value { font-size: 20px; }
+  .gd-summary { gap: 6px; padding: 6px; }
   .gd-chart-axis span:nth-child(even) { visibility: hidden; }
   .gd-chart-y { font-size: 9px; }
   .gd-stack-label { font-size: 8px; }
   .gd-lanes { grid-template-columns: 1fr; }
-  .gd-table-scroll table { min-inline-size: 278px; }
-  .gd-table-scroll th, .gd-table-scroll td { padding-inline: 6px; }
-  .gd-table-scroll td { font-size: 10px; }
+  .gd-balance-number { font-size: 24px !important; }
+  .gd-streams { padding: 6px 2px; }
+  .gd-streams div { padding: 0 4px; }
+  .gd-streams span { font-size: 8.5px; }
+  .gd-streams strong { font-size: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .gd-app *, .gd-app *::before, .gd-app *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
@@ -1780,8 +1791,8 @@ function GlassyDashboard({
         </button>
         <div className="gd-top-actions">
           {onCreateInvoice && (
-            <button type="button" className="gd-primary" onClick={onCreateInvoice} style={{ minBlockSize: "40px", padding: "0 13px" }}>
-              <Plus aria-hidden="true" /> <span className="hidden sm:inline">Buat Tagihan</span>
+            <button type="button" className="gd-primary hidden md:inline-flex" onClick={onCreateInvoice} style={{ minBlockSize: "40px", padding: "0 13px" }}>
+              <Plus aria-hidden="true" /> <span>Buat Tagihan</span>
             </button>
           )}
           {onOpenAuditLog && (

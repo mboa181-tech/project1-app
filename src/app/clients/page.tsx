@@ -140,7 +140,7 @@ export default function ClientsPage() {
       />
 
       {/* Floating Glass Top Bar */}
-      <header className="sticky top-4 z-40 max-w-7xl w-[calc(100%-32px)] mx-auto glass-modal rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 shadow-xl">
+      <header className="sticky top-3 sm:top-4 z-40 max-w-7xl w-[calc(100%-20px)] sm:w-[calc(100%-32px)] mx-auto glass-modal rounded-full px-3 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 shadow-xl">
         <div className="flex items-center gap-3">
           <Link
             href="/"
