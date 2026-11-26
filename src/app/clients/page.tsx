@@ -493,7 +493,7 @@ export default function ClientsPage() {
                   className="glass-btn-primary px-3 py-1.5 text-xs font-bold flex items-center gap-1.5"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>+ Buat Tagihan Baru</span>
+                  <span>Buat Tagihan Baru</span>
                 </button>
               </div>
 
