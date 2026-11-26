@@ -5,13 +5,14 @@ import Link from "next/link";
 import { Invoice } from "@/lib/types";
 import { formatRupiah } from "@/lib/format-currency";
 
-import { ArrowDownRight, ArrowRight, ArrowUpRight, Box, CircleDollarSign, Clock3, Download, Ellipsis, Eye, Filter, ListChecks, Search, ShieldCheck, ShoppingBag, TriangleAlert, Users, Zap, ArrowDownToLine, BarChart3, Bell, BriefcaseBusiness, ChevronRight, Command, LayoutDashboard, Moon, Sun, TrendingUp, X, Plus, Pencil, Trash2, History, LogIn, LogOut, FileText } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, Box, CircleDollarSign, Clock3, Download, Ellipsis, Eye, Filter, ListChecks, Search, ShieldCheck, ShoppingBag, TriangleAlert, Users, Zap, ArrowDownToLine, BarChart3, Bell, BriefcaseBusiness, ChevronRight, Command, LayoutDashboard, Moon, Sun, TrendingUp, X, Plus, Pencil, Trash2, History, LogIn, LogOut, FileText, Globe } from "lucide-react";
 
 import { useGSAP } from "@gsap/react";
 
 import { gsap } from "gsap";
 
 import "@fontsource-variable/manrope";
+import { useLanguage } from "@/context/LanguageContext";
 
 
 
@@ -225,8 +226,16 @@ const dashboardStyles = `
   background: var(--gd-coral); box-shadow: 0 0 0 2px var(--gd-surface);
 }
 
-.gd-stage-wrap { position: relative; margin-block: 11px 0; }
+.gd-stage-wrap {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-block: 14px 0;
+}
 .gd-stage {
+  flex: 1;
+  min-inline-size: 0;
   color: var(--gd-ink);
   border: 1px solid var(--gd-rim);
   border-radius: 34px;
@@ -487,30 +496,50 @@ const dashboardStyles = `
 .gd-work-meta { font-size: 9.5px; font-weight: 750; margin-top: 2px; color: var(--gd-muted); }
 
 .gd-dock {
-  position: absolute; z-index: 3;
-  display: flex; align-items: center; gap: 3px; padding: 4px; border-radius: 999px;
+  z-index: 10;
+  display: flex; align-items: center; gap: 4px; padding: 5px; border-radius: 999px;
 }
-.gd-dock-side { flex-direction: column; left: -24px; top: clamp(66px, 16vh, 153px); }
-.gd-dock-bottom { left: 50%; bottom: -24px; translate: -50% 0; }
+.gd-dock-side {
+  position: sticky;
+  top: 86px;
+  left: auto;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 6px;
+  gap: 6px;
+  box-shadow: inset 1px 1px 1px var(--gd-edge-light), inset -1px -1px 1px var(--gd-edge-shade),
+    inset 0 -2px 5px var(--gd-gloss), 0 8px 24px rgb(var(--gd-dark-shadow) / 18%);
+}
+.gd-dock-bottom { display: none !important; }
 .gd-dock a {
   z-index: 1; position: relative; display: flex; gap: 6px; justify-content: center; align-items: center;
   min-inline-size: 44px; min-block-size: 44px; padding: 0 13px; border-radius: 999px;
   font-size: 11px; font-weight: 800; white-space: nowrap;
 }
-.gd-dock-side a { padding: 0; }
-.gd-dock a svg { width: 16px; height: 16px; stroke-width: 1.9; }
+.gd-dock-side a {
+  padding: 0;
+  inline-size: 42px;
+  block-size: 42px;
+  min-inline-size: 42px;
+  min-block-size: 42px;
+  border-radius: 50%;
+}
+.gd-dock a svg { width: 17px; height: 17px; stroke-width: 1.9; }
 .gd-dock a[aria-current="page"] { color: var(--gd-pick-ink); }
 .gd-dock a:not([aria-current="page"]):hover { background: var(--gd-inner); }
 .gd-dock-indicator {
   position: absolute; inset: 0 auto auto 0; pointer-events: none; visibility: hidden;
   border-radius: 999px; background: var(--gd-pick); box-shadow: inset 0 1px 0 white, 0 2px 7px rgb(var(--gd-dark-shadow) / 16%);
 }
+.gd-dock-side .gd-dock-indicator { border-radius: 50%; }
 .gd-dock-indicator[data-ready="true"] { visibility: visible; transition: transform .36s cubic-bezier(.24, .89, .26, 1), width .36s cubic-bezier(.24, .89, .26, 1), height .36s cubic-bezier(.24, .89, .26, 1); }
 .gd-dock-side .gd-dock-text, .gd-dock-short { display: none; }
 .gd-dock-tip {
-  display: none; position: absolute; left: calc(100% + 7px); z-index: 1; pointer-events: none;
-  color: var(--gd-ink); background: var(--gd-surface); padding: 6px 9px; border: 1px solid var(--gd-rim);
-  border-radius: 7px; box-shadow: 0 3px 8px rgb(var(--gd-dark-shadow) / 17%);
+  display: none; position: absolute; left: calc(100% + 10px); z-index: 20; pointer-events: none;
+  color: var(--gd-ink); background: var(--gd-surface); padding: 6px 10px; border: 1px solid var(--gd-rim);
+  border-radius: 8px; box-shadow: 0 4px 12px rgb(var(--gd-dark-shadow) / 22%);
+  white-space: nowrap; font-size: 11px; font-weight: 750;
 }
 .gd-dock-side a:is(:hover, :focus-visible) .gd-dock-tip { display: inline; }
 .gd-footer { padding: 33px 3px 1px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
@@ -586,8 +615,9 @@ const dashboardStyles = `
   .gd-command-grid, .gd-analytics-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .gd-command-side, .gd-command-grid > .gd-activity { grid-column: 1; }
   .gd-metric-grid, .gd-lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .gd-dock-side { display: none; }
-  .gd-dock-bottom { position: fixed; inset: auto 8px calc(9px + env(safe-area-inset-bottom)); translate: none; justify-content: space-between; z-index: 40; }
+  .gd-stage-wrap { display: block; }
+  .gd-dock-side { display: none !important; }
+  .gd-dock-bottom { display: flex !important; position: fixed; inset: auto 8px calc(9px + env(safe-area-inset-bottom)); translate: none; justify-content: space-between; z-index: 40; }
   .gd-dock-bottom a { flex: 1; flex-direction: column; gap: 2px; padding: 3px 4px; min-block-size: 46px; line-height: 1.2; font-size: 9px; }
   .gd-dock-bottom a svg { width: 14px; height: 14px; }
   .gd-dock-bottom .gd-dock-text { display: none; }
@@ -1567,14 +1597,46 @@ function useNavigationReducedMotion(motion: boolean) {
 
 gsap.registerPlugin(useGSAP);
 
-const views = [
-  { id: "command", label: "Command Center", short: "Command", icon: LayoutDashboard, description: "Revenue, automations, and what needs your attention.", prompt: "Show me what needs attention." },
-  { id: "trends", label: "Trends", short: "Trends", icon: TrendingUp, description: "Compare operating costs and revenue over time.", prompt: "How is revenue trending this month?" },
-  { id: "metrics", label: "Metrics", short: "Metrics", icon: BarChart3, description: "Track orders, traffic, and device performance.", prompt: "Show me traffic by device." },
-  { id: "operations", label: "Premium Operations", short: "Operations", icon: BriefcaseBusiness, description: "Manage approvals, schedules, and exceptions across systems.", prompt: "Which actions are waiting for review?" },
-] as const;
+function getViews(lang: "id" | "en" = "id") {
+  return [
+    {
+      id: "command" as const,
+      label: "Command Center",
+      short: "Command",
+      icon: LayoutDashboard,
+      description: lang === "id" ? "Pendapatan, otomatisasi, dan ringkasan tagihan yang perlu perhatian." : "Revenue, automations, and what needs your attention.",
+      prompt: lang === "id" ? "Tampilkan apa yang perlu perhatian saya." : "Show me what needs attention.",
+    },
+    {
+      id: "trends" as const,
+      label: lang === "id" ? "Tren Finansial" : "Trends",
+      short: lang === "id" ? "Tren" : "Trends",
+      icon: TrendingUp,
+      description: lang === "id" ? "Bandingkan biaya operasional dan pendapatan dari waktu ke waktu." : "Compare operating costs and revenue over time.",
+      prompt: lang === "id" ? "Bagaimana tren pendapatan bulan ini?" : "How is revenue trending this month?",
+    },
+    {
+      id: "metrics" as const,
+      label: lang === "id" ? "Metrik & Performa" : "Metrics",
+      short: lang === "id" ? "Metrik" : "Metrics",
+      icon: BarChart3,
+      description: lang === "id" ? "Pantau pesanan, volume lalu lintas, dan performa sistem." : "Track orders, traffic, and device performance.",
+      prompt: lang === "id" ? "Tampilkan performa lalu lintas per perangkat." : "Show me traffic by device.",
+    },
+    {
+      id: "operations" as const,
+      label: lang === "id" ? "Papan Operasional" : "Operations",
+      short: lang === "id" ? "Operasi" : "Operations",
+      icon: BriefcaseBusiness,
+      description: lang === "id" ? "Kelola persetujuan, jadwal penagihan, dan eksepsi sistem." : "Manage approvals, schedules, and exceptions across systems.",
+      prompt: lang === "id" ? "Tindakan apa saja yang menunggu peninjauan?" : "Which actions are waiting for review?",
+    },
+  ];
+}
 
-const routeOrder: View[] = views.map(view => view.id);
+const defaultViews = getViews("id");
+const views = defaultViews;
+const routeOrder: View[] = defaultViews.map(view => view.id);
 
 function routeFromHash(): View {
   if (typeof location === "undefined") return "command";
@@ -1592,13 +1654,15 @@ function saveCsv(filename: string, rows: (string | number)[][]) {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-function Dock({ active, side = false, select }: {
+function Dock({ active, side = false, select, lang = "id" }: {
   active: View;
   side?: boolean;
   select: (view: View) => void;
+  lang?: "id" | "en";
 }) {
   const nav = useRef<HTMLElement>(null);
   const marker = useRef<HTMLSpanElement>(null);
+  const currentViews = getViews(lang);
 
   useEffect(() => {
     const container = nav.current;
@@ -1628,7 +1692,7 @@ function Dock({ active, side = false, select }: {
   return <nav ref={nav} className={side ? "gd-dock gd-dock-side" : "gd-dock gd-dock-bottom"}
     aria-label={side ? "Workspace shortcuts" : "Workspace views"}>
     <span ref={marker} className="gd-dock-indicator" aria-hidden="true" />
-    {views.map(({ id, label, short, icon: Icon }) => (
+    {currentViews.map(({ id, label, short, icon: Icon }) => (
       <a href={`#${id}`} key={id} aria-label={label} aria-current={active === id ? "page" : undefined} onClick={event => onSelect(event, id)}>
         <Icon aria-hidden="true" />
         <span className="gd-dock-text" aria-hidden="true">{label}</span>
@@ -1656,10 +1720,11 @@ function Dialog({ title, children, close }: { title: string; children: ReactNode
   </dialog>;
 }
 
-function QuickActions({ workspaceName, select, close }: { workspaceName: string; select: (view: View) => void; close: () => void }) {
+function QuickActions({ workspaceName, select, close, lang = "id" }: { workspaceName: string; select: (view: View) => void; close: () => void; lang?: "id" | "en" }) {
   const [query, setQuery] = useState("");
   const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
-  const results = views.filter(view => terms.every(term =>
+  const currentViews = getViews(lang);
+  const results = currentViews.filter(view => terms.every(term =>
     `${view.label} ${view.description} ${view.prompt}`.toLowerCase().includes(term)));
   return <Dialog title={"Search " + workspaceName} close={close}>
     <label className="gd-search gd-command-input"><Search aria-hidden="true" />
@@ -1776,7 +1841,9 @@ function GlassyDashboard({
     });
   }, { scope: content, dependencies: [view, period, reduced], revertOnUpdate: true });
 
-  const current = views.find(item => item.id === view)!;
+  const { lang, toggleLang } = useLanguage();
+  const currentViews = getViews(lang);
+  const current = currentViews.find(item => item.id === view) || currentViews[0];
   const workItem = typeof modal === "object" && modal ? work.find(item => item.id === modal.itemId) : undefined;
   const overdueOrPendingInvoices = invoices ? invoices.filter(i => i.status === "OVERDUE" || i.status === "PENDING") : [];
   const reviewCount = invoices ? overdueOrPendingInvoices.length : work.filter(item => item.status === "Needs review").length;
@@ -1820,9 +1887,34 @@ function GlassyDashboard({
         <div className="gd-top-actions">
           {onCreateInvoice && (
             <button type="button" className="gd-primary" onClick={onCreateInvoice} style={{ minBlockSize: "40px", padding: "0 13px" }}>
-              <Plus aria-hidden="true" /> <span>Buat Tagihan</span>
+              <Plus aria-hidden="true" /> <span>{lang === "id" ? "Buat Tagihan" : "New Invoice"}</span>
             </button>
           )}
+          <button
+            type="button"
+            className="gd-icon-button"
+            title={lang === "id" ? "Ganti Bahasa (Sekarang ID)" : "Change Language (Current EN)"}
+            aria-label="Ganti Bahasa"
+            onClick={toggleLang}
+          >
+            <Globe aria-hidden="true" />
+            <span style={{
+              position: "absolute",
+              bottom: 2,
+              right: 2,
+              fontSize: 8.5,
+              fontWeight: 900,
+              background: "var(--gd-pick)",
+              color: "var(--gd-pick-ink)",
+              borderRadius: 999,
+              padding: "1px 3.5px",
+              lineHeight: 1,
+              border: "1px solid var(--gd-rim)",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.2)"
+            }}>
+              {lang === "en" ? "EN" : "ID"}
+            </span>
+          </button>
           {onOpenAuditLog && (
             <button type="button" className="gd-icon-button" title="Log Audit" aria-label="Log Audit" onClick={onOpenAuditLog}>
               <History aria-hidden="true" />
@@ -1860,7 +1952,7 @@ function GlassyDashboard({
       </header>
 
       <div className="gd-stage-wrap">
-        <Dock active={active} side select={selectView} />
+        <Dock active={active} side select={selectView} lang={lang} />
         <main className="gd-stage">
           <div className="gd-stage-scroll" ref={scrollArea}>
             <header className="gd-view-head">
@@ -1873,7 +1965,7 @@ function GlassyDashboard({
                   {periods.map(item => <button type="button" key={item} aria-pressed={item === period} onClick={() => setPeriod(item)}>{item}</button>)}
                 </div>}
                 {(view === "operations" || view === "trends" || invoices) && <button type="button" className="gd-primary gd-export" onClick={view === "operations" ? downloadWork : downloadReport}>
-                  <ArrowDownToLine aria-hidden="true" />Export CSV
+                  <ArrowDownToLine aria-hidden="true" /> <span>{lang === "id" ? "Ekspor CSV" : "Export CSV"}</span>
                 </button>}
               </div>
             </header>
@@ -1914,14 +2006,14 @@ function GlassyDashboard({
             </div>
           </div>
         </main>
-        <Dock active={active} select={selectView} />
+        <Dock active={active} select={selectView} lang={lang} />
       </div>
       <footer className="gd-footer"><span>{invoices ? "FlowDesk Operations · Next.js 15 & Supabase PostgreSQL" : "Sample workspace"}</span>{backgroundCredit &&
         <a href={backgroundCredit.href} target="_blank" rel="noreferrer">{backgroundCredit.label}<ArrowUpRight aria-hidden="true" /></a>}
       </footer>
     </div>
 
-    {modal === "search" && <QuickActions workspaceName={workspaceName} select={selectView} close={close} />}
+    {modal === "search" && <QuickActions workspaceName={workspaceName} select={selectView} close={close} lang={lang} />}
     {modal === "notifications" && <Dialog title={invoices ? "Tagihan Perlu Perhatian" : "Notifications"} close={close}>
       <div className="gd-quick-list">
         {invoices ? (
