@@ -395,13 +395,20 @@ const dashboardStyles = `
 .gd-app .gd-search input:focus-visible, .gd-app .gd-filter select:focus-visible { outline: none; }
 .gd-table-scroll {
   max-inline-size: 100%;
+  width: 100%;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
   scrollbar-width: thin;
+  scrollbar-color: var(--gd-rim) transparent;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
 }
-.gd-table-scroll table { inline-size: 100%; border-spacing: 0; text-align: start; }
+.gd-table-scroll::-webkit-scrollbar { height: 5px; }
+.gd-table-scroll::-webkit-scrollbar-track { background: var(--gd-inner); border-radius: 999px; }
+.gd-table-scroll::-webkit-scrollbar-thumb { background: var(--gd-line); border-radius: 999px; }
+.gd-table-scroll::-webkit-scrollbar-thumb:hover { background: var(--gd-rim); }
+.gd-table-scroll table { inline-size: 100%; min-inline-size: 640px; border-spacing: 0; text-align: start; }
 .gd-table-scroll th, .gd-table-scroll td { padding: 9px 10px; text-align: start; }
 .gd-table-scroll th { background: var(--gd-inner); font-size: 10px; color: var(--gd-muted); font-weight: 800; }
 .gd-table-scroll th:first-child { border-radius: 8px 0 0 8px; }
@@ -668,7 +675,7 @@ const dashboardStyles = `
     min-block-size: 39px;
   }
   .gd-stage { border-radius: 23px; }
-  .gd-stage-scroll { block-size: auto; padding: 15px 12px calc(90px + env(safe-area-inset-bottom)); overflow: visible; }
+  .gd-stage-scroll { block-size: auto; padding: 15px 12px calc(90px + env(safe-area-inset-bottom)); overflow: visible; touch-action: auto; }
   .gd-view-head { align-items: flex-start; flex-direction: column; gap: 8px; margin-bottom: 14px; }
   .gd-view-head h1 { font-size: 26px; }
   .gd-view-head p { font-size: 11.5px; margin-top: 4px; }
@@ -687,8 +694,8 @@ const dashboardStyles = `
   .gd-footer { padding-top: 9px; padding-bottom: calc(80px + env(safe-area-inset-bottom)); flex-direction: column; gap: 6px; text-align: center; }
   .gd-period button { min-block-size: 38px; }
   .gd-primary, .gd-secondary { min-block-size: 42px; }
-  .gd-table-scroll { max-inline-size: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .gd-table-scroll table { min-inline-size: 540px; }
+  .gd-table-scroll { max-inline-size: 100%; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
+  .gd-table-scroll table { min-inline-size: 640px; }
 }
 @media (max-width: 420px) {
   .gd-panel { padding: 12px; }
@@ -1077,7 +1084,7 @@ function InvoiceLedger({
   return (
     <Panel
       title="Daftar Tagihan & Invoice"
-      subtitle="Klik badge status untuk mengubah status secara langsung"
+      subtitle="Geser ke samping untuk melihat seluruh data · Klik badge untuk ubah status"
       className="gd-activity"
       action={
         <div className="gd-table-tools">
