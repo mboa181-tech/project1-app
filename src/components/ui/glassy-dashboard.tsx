@@ -4,8 +4,9 @@ import { useId, useState, useMemo, type CSSProperties, type ReactNode, useEffect
 import Link from "next/link";
 import { Invoice } from "@/lib/types";
 import { formatRupiah } from "@/lib/format-currency";
+import { openWhatsAppInvoice } from "@/lib/whatsapp";
 
-import { ArrowDownRight, ArrowRight, ArrowUpRight, Box, CircleDollarSign, Clock3, Download, Ellipsis, Eye, Filter, ListChecks, Search, ShieldCheck, ShoppingBag, TriangleAlert, Users, Zap, ArrowDownToLine, BarChart3, Bell, BriefcaseBusiness, ChevronRight, Command, LayoutDashboard, Moon, Sun, TrendingUp, X, Plus, Pencil, Trash2, History, LogIn, LogOut, FileText, Globe } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, Box, CircleDollarSign, Clock3, Download, Ellipsis, Eye, Filter, ListChecks, Search, ShieldCheck, ShoppingBag, TriangleAlert, Users, Zap, ArrowDownToLine, BarChart3, Bell, BriefcaseBusiness, ChevronRight, Command, LayoutDashboard, Moon, Sun, TrendingUp, X, Plus, Pencil, Trash2, History, LogIn, LogOut, FileText, Globe, MessageCircle } from "lucide-react";
 
 import { useGSAP } from "@gsap/react";
 
@@ -1070,6 +1071,7 @@ function InvoiceLedger({
   onToggleStatus?: (id: string) => void;
   onDeleteInvoice?: (id: string) => void;
 }) {
+  const { lang } = useLanguage();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("ALL");
   const show = invoices.filter(
@@ -1146,6 +1148,21 @@ function InvoiceLedger({
                 </td>
                 <td>
                   <div style={{ display: "inline-flex", gap: "6px", alignItems: "center" }}>
+                    <button
+                      type="button"
+                      onClick={() => openWhatsAppInvoice(inv, typeof window !== "undefined" ? window.location.origin : "", lang)}
+                      title={lang === "id" ? "Kirim rincian tagihan via WhatsApp" : "Send invoice details via WhatsApp"}
+                      className="gd-secondary"
+                      style={{
+                        minBlockSize: "28px",
+                        padding: "3px 8px",
+                        fontSize: "10.5px",
+                        color: "#25D366",
+                        borderColor: "rgba(37, 211, 102, 0.35)",
+                      }}
+                    >
+                      <MessageCircle style={{ width: 12, height: 12 }} />
+                    </button>
                     {onViewInvoice && (
                       <button
                         type="button"

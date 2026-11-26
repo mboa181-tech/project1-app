@@ -25,8 +25,10 @@ import {
   Globe,
   X,
   Copy,
+  MessageCircle,
 } from "lucide-react";
 import { formatRupiah } from "@/lib/format-currency";
+import { openWhatsAppInvoice } from "@/lib/whatsapp";
 import Link from "next/link";
 
 interface ClientRecord {
@@ -570,6 +572,16 @@ export default function ClientsPage() {
                       >
                         <FileText className="w-3.5 h-3.5" />
                         <span>Lihat Nota</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => openWhatsAppInvoice(inv, window.location.origin, lang)}
+                        className="glass-btn-secondary px-2.5 py-1.5 text-xs font-bold text-[#25D366] hover:bg-[#25D366]/15 transition-colors"
+                        style={{ borderColor: "rgba(37, 211, 102, 0.35)" }}
+                        title="Kirim Tagihan via WhatsApp"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
                       </button>
 
                       <button

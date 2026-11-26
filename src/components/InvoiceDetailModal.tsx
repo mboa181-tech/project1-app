@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Invoice } from "@/lib/types";
 import { useLanguage } from "@/context/LanguageContext";
 import { formatRupiah, terbilangRupiah } from "@/lib/format-currency";
+import { openWhatsAppInvoice } from "@/lib/whatsapp";
 import {
   X,
   Printer,
@@ -15,6 +16,7 @@ import {
   CreditCard,
   Lock,
   Pencil,
+  MessageCircle,
 } from "lucide-react";
 
 interface InvoiceDetailModalProps {
@@ -142,6 +144,21 @@ export function InvoiceDetailModal({
                   <span>{t("detailCopyLink")}</span>
                 </>
               )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => openWhatsAppInvoice(invoice, typeof window !== "undefined" ? window.location.origin : "", lang)}
+              title={lang === "id" ? "Kirim rincian tagihan langsung via WhatsApp" : "Send invoice details via WhatsApp"}
+              className="px-3.5 py-1.5 text-xs font-bold rounded-full flex items-center gap-1.5 transition-all shadow-sm"
+              style={{
+                backgroundColor: "rgba(37, 211, 102, 0.14)",
+                color: "#25D366",
+                border: "1px solid rgba(37, 211, 102, 0.35)",
+              }}
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>{t("detailSendWhatsApp")}</span>
             </button>
 
             <button

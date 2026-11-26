@@ -23,7 +23,9 @@ import {
   Globe,
   Share2,
   Receipt,
+  MessageCircle,
 } from "lucide-react";
+import { openWhatsAppInvoice } from "@/lib/whatsapp";
 
 const studioPhoto =
   "https://cdn.21st.dev/assets/mirror/ea/ea9270b3b7246283219ac52fa77a1213e9d1efb285d76348d3620609ba6cefa7.jpg";
@@ -376,6 +378,16 @@ export default function PublicPaymentPage() {
                       <span>Salin Bukti</span>
                     </>
                   )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => invoice && openWhatsAppInvoice(invoice, window.location.origin, lang)}
+                  className="glass-btn-secondary py-3 px-4 text-xs font-bold flex items-center justify-center gap-1.5 text-[#25D366] hover:bg-[#25D366]/15 transition-colors"
+                  style={{ borderColor: "rgba(37, 211, 102, 0.35)" }}
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>Kirim ke WA</span>
                 </button>
 
                 <button
