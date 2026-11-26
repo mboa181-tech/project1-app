@@ -141,30 +141,30 @@ export default function ClientsPage() {
 
       {/* Floating Glass Top Bar */}
       <header className="sticky top-3 sm:top-4 z-40 max-w-7xl w-[calc(100%-20px)] sm:w-[calc(100%-32px)] mx-auto glass-modal rounded-full px-3 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3 shadow-xl">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <Link
             href="/"
-            className="glass-icon-btn"
+            className="glass-icon-btn shrink-0"
             title="Kembali ke Dashboard Utama"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <div className="flex items-center gap-2.5">
-            <span className="w-8 h-8 rounded-full bg-[var(--gd-pick)] text-[var(--gd-pick-ink)] flex items-center justify-center font-bold text-xs shadow-sm">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-8 h-8 shrink-0 rounded-full bg-[var(--gd-pick)] text-[var(--gd-pick-ink)] flex items-center justify-center font-bold text-xs shadow-sm">
               <Users className="w-4 h-4" />
             </span>
-            <div>
-              <strong className="block text-xs font-black tracking-wider uppercase leading-none">
+            <div className="min-w-0">
+              <strong className="block text-xs font-black tracking-wider uppercase leading-none truncate">
                 FlowDesk CRM
               </strong>
-              <small className="block text-[10px] text-[var(--gd-muted)]">
+              <small className="block text-[10px] text-[var(--gd-muted)] truncate">
                 Direktori Hubungan Klien
               </small>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
             type="button"
             onClick={() => setIsCreateOpen(true)}

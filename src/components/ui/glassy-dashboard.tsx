@@ -77,6 +77,7 @@ const dashboardStyles = `
   position: relative;
   isolation: isolate;
   min-block-size: 100svh;
+  overflow-x: clip;
   background: #ab8e76;
   color: var(--gd-ink);
   color-scheme: light;
@@ -181,6 +182,7 @@ const dashboardStyles = `
   display: flex;
   align-items: center;
   gap: 10px;
+  min-inline-size: 0;
   min-block-size: 43px;
   max-inline-size: 100%;
   border: 1px solid var(--gd-line);
@@ -271,7 +273,7 @@ const dashboardStyles = `
   display: inline-flex; justify-content: center; align-items: center; gap: 7px;
   min-block-size: 40px; padding: 7px 12px;
   font-size: 11.5px; font-weight: 790; line-height: 1.2; border-radius: 999px;
-  border: 1px solid transparent;
+  border: 1px solid transparent; white-space: nowrap; flex-shrink: 0;
 }
 .gd-primary { background: var(--gd-primary); color: var(--gd-primary-ink); }
 .gd-secondary { background: var(--gd-raised); border-color: var(--gd-rim); color: var(--gd-ink); }
@@ -529,13 +531,19 @@ const dashboardStyles = `
 .gd-work-facts dt { font-size: 11px; color: var(--gd-muted); }
 .gd-work-facts dd { margin: 4px 0 0; font-weight: 790; }
 
+@media (max-width: 1220px) {
+  .gd-top { grid-template-columns: auto minmax(160px, 1fr) auto; gap: 10px; }
+  .gd-top-actions { gap: 5px; }
+}
 @media (max-width: 1060px) {
-  .gd-surround { inline-size: calc(100% - 74px); }
-  .gd-stage-scroll { padding-inline: 29px; }
+  .gd-surround { inline-size: calc(100% - 64px); }
+  .gd-stage-scroll { padding-inline: 22px; }
   .gd-command-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .gd-command-grid > .gd-command-chart { grid-column: 1; }
   .gd-command-side { grid-column: 2; }
   .gd-command-grid > .gd-activity { grid-column: 1 / -1; }
+  .gd-metric-grid, .gd-lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gd-analytics-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 760px) {
   .gd-surround { padding-top: 10px; padding-bottom: calc(85px + env(safe-area-inset-bottom)); inline-size: calc(100% - 20px); }
@@ -1791,7 +1799,7 @@ function GlassyDashboard({
         </button>
         <div className="gd-top-actions">
           {onCreateInvoice && (
-            <button type="button" className="gd-primary hidden md:inline-flex" onClick={onCreateInvoice} style={{ minBlockSize: "40px", padding: "0 13px" }}>
+            <button type="button" className="gd-primary" onClick={onCreateInvoice} style={{ minBlockSize: "40px", padding: "0 13px" }}>
               <Plus aria-hidden="true" /> <span>Buat Tagihan</span>
             </button>
           )}
