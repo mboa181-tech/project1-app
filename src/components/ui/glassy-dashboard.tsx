@@ -215,24 +215,7 @@ const dashboardStyles = `
   animation: gd-prompt-in .74s steps(28, end) both;
 }
 @keyframes gd-prompt-in { from { clip-path: inset(0 100% 0 0); } }
-.gd-kbd-hint {
-  font-size: 9.5px;
-  font-weight: 800;
-  color: var(--gd-muted);
-  background: var(--gd-inner);
-  border: 1px solid var(--gd-line);
-  border-radius: 6px;
-  padding: 1px 5.5px;
-  margin-inline-start: auto;
-  margin-inline-end: 4px;
-  white-space: nowrap;
-  opacity: .85;
-  flex-shrink: 0;
-}
-@media (max-width: 900px) {
-  .gd-kbd-hint { display: none; }
-}
-.gd-ask-search { margin-inline-start: 0; width: 15px; height: 15px; color: var(--gd-muted); flex-shrink: 0; }
+.gd-ask-search { margin-inline-start: auto; width: 15px; height: 15px; color: var(--gd-muted); flex-shrink: 0; }
 .gd-top-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-shrink: 0; }
 .gd-icon-button {
   position: relative; min-inline-size: 44px; min-block-size: 44px; display: inline-grid; place-items: center;
@@ -2217,7 +2200,7 @@ function GlassyDashboard({
           className="gd-ask"
           aria-label={lang === "id" ? "Pusat Perintah & Pencarian" : "Command Palette & Search"}
           onClick={() => setModal("search")}
-          title={lang === "id" ? "Buka Pencarian & Pusat Perintah (Ctrl + K)" : "Open Command Palette & Search (Ctrl + K)"}
+          title={lang === "id" ? "Buka Pencarian & Pusat Perintah" : "Open Command Palette & Search"}
         >
           <span className="gd-orb" aria-hidden="true" />
           <span className="gd-prompt" key={lang + "-" + reviewCount}>
@@ -2225,7 +2208,6 @@ function GlassyDashboard({
               ? (lang === "id" ? `${reviewCount} tagihan perlu perhatian · Cari apa saja...` : `${reviewCount} need attention · Search anything...`)
               : (lang === "id" ? "Cari invoice, klien, perintah..." : "Search invoices, clients, actions...")}
           </span>
-          <span className="gd-kbd-hint" aria-hidden="true">Ctrl K</span>
           <Search aria-hidden="true" className="gd-ask-search" />
         </button>
         <div className="gd-top-actions">
