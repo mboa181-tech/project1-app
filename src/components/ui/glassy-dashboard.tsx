@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type CSSProperties, type ReactNode, useEffect, useRef, type MouseEvent } from "react";
+import { useId, useState, useMemo, type CSSProperties, type ReactNode, useEffect, useRef, type MouseEvent } from "react";
 import Link from "next/link";
 import { Invoice } from "@/lib/types";
 import { formatRupiah } from "@/lib/format-currency";
@@ -215,7 +215,24 @@ const dashboardStyles = `
   animation: gd-prompt-in .74s steps(28, end) both;
 }
 @keyframes gd-prompt-in { from { clip-path: inset(0 100% 0 0); } }
-.gd-ask-search { margin-inline-start: auto; width: 15px; height: 15px; color: var(--gd-muted); flex-shrink: 0; }
+.gd-kbd-hint {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--gd-muted);
+  background: var(--gd-inner);
+  border: 1px solid var(--gd-line);
+  border-radius: 6px;
+  padding: 1px 5.5px;
+  margin-inline-start: auto;
+  margin-inline-end: 4px;
+  white-space: nowrap;
+  opacity: .85;
+  flex-shrink: 0;
+}
+@media (max-width: 900px) {
+  .gd-kbd-hint { display: none; }
+}
+.gd-ask-search { margin-inline-start: 0; width: 15px; height: 15px; color: var(--gd-muted); flex-shrink: 0; }
 .gd-top-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-shrink: 0; }
 .gd-icon-button {
   position: relative; min-inline-size: 44px; min-block-size: 44px; display: inline-grid; place-items: center;
@@ -555,26 +572,67 @@ const dashboardStyles = `
 .gd-footer a svg { width: 10px; height: 10px; }
 
 .gd-dialog {
-  max-inline-size: min(calc(100% - 26px), 485px); inline-size: 100%;
-  border-radius: 23px; border: 1px solid var(--gd-rim); color: var(--gd-ink); padding: 0;
-  background: var(--gd-surface); box-shadow: 0 20px 80px rgb(var(--gd-dark-shadow) / 38%);
+  max-inline-size: min(calc(100% - 24px), 550px); inline-size: 100%;
+  border-radius: 24px; border: 1px solid var(--gd-rim); color: var(--gd-ink); padding: 0;
+  background: var(--gd-surface); box-shadow: 0 24px 80px rgb(var(--gd-dark-shadow) / 45%);
 }
 .gd-dialog::backdrop { background: rgb(30 21 17 / 43%); backdrop-filter: blur(5px); }
-.gd-dialog-inner { padding: 18px; }
-.gd-dialog-inner > header { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 13px; }
-.gd-dialog-inner h2 { font-size: 24px; font-weight: 830; letter-spacing: -.045em; }
-.gd-command-input { inline-size: 100%; padding-inline: 10px; margin-bottom: 8px; min-block-size: 44px; }
-.gd-command-input input { min-block-size: 42px; font-size: 14px; }
-.gd-quick-list { display: grid; gap: 5px; }
-.gd-quick-list button {
-  display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px;
-  text-align: start; border: 1px solid var(--gd-line); border-radius: 10px; background: var(--gd-inner);
+.gd-dialog-inner { padding: 20px; display: flex; flex-direction: column; max-height: 85vh; }
+.gd-dialog-inner > header { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.gd-dialog-inner h2 { font-size: 20px; font-weight: 830; letter-spacing: -.03em; }
+.gd-command-input { inline-size: 100%; padding-inline: 12px; margin-bottom: 12px; min-block-size: 44px; border-radius: 14px; }
+.gd-command-input input { min-block-size: 42px; font-size: 13.5px; }
+.gd-quick-scroll {
+  overflow-y: auto;
+  max-height: calc(85vh - 130px);
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
-.gd-quick-list button:hover { background: var(--gd-raised); }
-.gd-quick-list button svg { width: 16px; height: 16px; color: var(--gd-muted); }
-.gd-quick-list button div { flex: 1; }
+.gd-quick-section-title {
+  font-size: 10px;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--gd-muted);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.gd-quick-list { display: grid; gap: 6px; }
+.gd-quick-list button {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px;
+  text-align: start; border: 1px solid var(--gd-line); border-radius: 12px; background: var(--gd-inner);
+  transition: all .15s ease;
+}
+.gd-quick-list button:hover { background: var(--gd-raised); border-color: var(--gd-rim); transform: translateY(-1px); }
+.gd-quick-list button svg { width: 16px; height: 16px; color: var(--gd-muted); flex-shrink: 0; }
+.gd-quick-list button div { flex: 1; min-width: 0; }
 .gd-quick-list strong, .gd-quick-list small { display: block; }
-.gd-quick-list small { color: var(--gd-muted); margin-top: 2px; font-size: 11px; }
+.gd-quick-list strong { font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gd-quick-list small { color: var(--gd-muted); margin-top: 2px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gd-quick-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.gd-quick-badge-paid {
+  background: color-mix(in srgb, var(--gd-teal) 18%, transparent);
+  color: var(--gd-teal);
+}
+.gd-quick-badge-pending {
+  background: color-mix(in srgb, var(--gd-ochre) 20%, transparent);
+  color: var(--gd-ochre);
+}
+.gd-quick-badge-overdue {
+  background: color-mix(in srgb, var(--gd-coral) 20%, transparent);
+  color: var(--gd-coral);
+}
 .gd-work-dialog-description { margin: 12px 0; }
 .gd-work-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 12px; }
 .gd-work-facts div { border: 1px solid var(--gd-line); border-radius: 9px; padding: 8px; }
@@ -1741,23 +1799,263 @@ function Dialog({ title, children, close }: { title: string; children: ReactNode
   </dialog>;
 }
 
-function QuickActions({ workspaceName, select, close, lang = "id" }: { workspaceName: string; select: (view: View) => void; close: () => void; lang?: "id" | "en" }) {
+function QuickActions({
+  workspaceName,
+  select,
+  close,
+  lang = "id",
+  invoices,
+  onViewInvoice,
+  onCreateInvoice,
+  onOpenAuditLog,
+  onSimulateWebhook,
+  toggleLang,
+  theme,
+  setTheme,
+  downloadReport,
+}: {
+  workspaceName: string;
+  select: (view: View) => void;
+  close: () => void;
+  lang?: "id" | "en";
+  invoices?: Invoice[];
+  onViewInvoice?: (inv: Invoice) => void;
+  onCreateInvoice?: () => void;
+  onOpenAuditLog?: () => void;
+  onSimulateWebhook?: () => void;
+  toggleLang?: () => void;
+  theme?: "light" | "dark";
+  setTheme?: (theme: "light" | "dark") => void;
+  downloadReport?: () => void;
+}) {
   const [query, setQuery] = useState("");
   const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
   const currentViews = getViews(lang);
-  const results = currentViews.filter(view => terms.every(term =>
-    `${view.label} ${view.description} ${view.prompt}`.toLowerCase().includes(term)));
-  return <Dialog title={"Search " + workspaceName} close={close}>
-    <label className="gd-search gd-command-input"><Search aria-hidden="true" />
-      <input type="search" aria-label="Find a dashboard view" placeholder="Find a view or report" value={query} onChange={event => setQuery(event.target.value)} />
-    </label>
-    <div className="gd-quick-list">
-      {results.map(({ label, id, description, icon: Icon }) => <button key={id} type="button" onClick={() => { close(); select(id); }}>
-        <Icon aria-hidden="true" /><div><strong>{label}</strong><small>{description}</small></div><ChevronRight aria-hidden="true" />
-      </button>)}
-      {results.length === 0 && <p className="gd-empty" role="status">No matching views.</p>}
-    </div>
-  </Dialog>;
+
+  // 1. Tagihan yang memerlukan perhatian (Overdue & Pending)
+  const attentionInvoices = useMemo(() => {
+    return (invoices || []).filter(inv => inv.status === "OVERDUE" || inv.status === "PENDING");
+  }, [invoices]);
+
+  // 2. Pencarian faktur / invoice berdasarkan nomor, klien, status, atau nominal
+  const matchingInvoices = useMemo(() => {
+    if (terms.length === 0 || !invoices) return [];
+    return invoices.filter(inv => {
+      const searchStr = `${inv.invoiceNumber} ${inv.clientName} ${inv.clientEmail} ${inv.status} ${formatRupiah(inv.total)} ${inv.notes || ""}`.toLowerCase();
+      return terms.every(term => searchStr.includes(term));
+    });
+  }, [invoices, terms]);
+
+  // 3. Aksi cepat & perintah sistem
+  const allActions = useMemo(() => [
+    {
+      id: "action-create",
+      label: lang === "id" ? "Buat Tagihan Baru" : "Create New Invoice",
+      description: lang === "id" ? "Terbitkan invoice baru dengan perhitungan PPN 11% otomatis" : "Issue a new invoice with auto VAT calculation",
+      icon: Plus,
+      action: () => { close(); onCreateInvoice?.(); },
+      keywords: "buat tagihan invoice baru create new tambah faktur",
+    },
+    {
+      id: "action-crm",
+      label: lang === "id" ? "Direktori Klien & CRM" : "Client Directory & CRM",
+      description: lang === "id" ? "Kelola akun klien korporat, riwayat pembayaran, dan nilai LTV" : "Manage corporate accounts, history, and LTV",
+      icon: Users,
+      action: () => { close(); window.location.href = "/clients"; },
+      keywords: "klien client crm ltv kontak perusahaan direktori",
+    },
+    {
+      id: "action-export",
+      label: lang === "id" ? "Ekspor Laporan Tagihan (CSV)" : "Export Invoices to CSV",
+      description: lang === "id" ? "Unduh seluruh rekap tagihan ke file spreadsheet" : "Download invoice summary as CSV",
+      icon: ArrowDownToLine,
+      action: () => { close(); downloadReport?.(); },
+      keywords: "ekspor export download csv unduh excel laporan rekap",
+    },
+    {
+      id: "action-audit",
+      label: lang === "id" ? "Log Audit & Jejak Aktivitas" : "Audit Log & Activity History",
+      description: lang === "id" ? "Lihat riwayat pembuatan tagihan dan sinkronisasi Supabase" : "View invoice creation and Supabase sync logs",
+      icon: History,
+      action: () => { close(); onOpenAuditLog?.(); },
+      keywords: "audit log riwayat aktivitas history jejak supabase",
+    },
+    {
+      id: "action-webhook",
+      label: lang === "id" ? "Simulasi Webhook Pembayaran" : "Simulate Payment Webhook",
+      description: lang === "id" ? "Uji coba otomatisasi penerimaan notifikasi pelunasan" : "Test automated payment settlement notification",
+      icon: Zap,
+      action: () => { close(); onSimulateWebhook?.(); },
+      keywords: "webhook simulasi payment bayar test notifikasi",
+    },
+    {
+      id: "action-lang",
+      label: lang === "id" ? "Ganti Bahasa ke English" : "Switch Language to Bahasa Indonesia",
+      description: lang === "id" ? "Bahasa saat ini: Bahasa Indonesia (ID)" : "Current language: English (EN)",
+      icon: Globe,
+      action: () => { close(); toggleLang?.(); },
+      keywords: "bahasa language english indonesia ganti switch translate",
+    },
+    {
+      id: "action-theme",
+      label: theme === "light"
+        ? (lang === "id" ? "Beralih ke Mode Gelap" : "Switch to Dark Mode")
+        : (lang === "id" ? "Beralih ke Mode Terang" : "Switch to Light Mode"),
+      description: lang === "id" ? "Ubah estetika visual antarmuka" : "Toggle interface visual theme",
+      icon: theme === "light" ? Moon : Sun,
+      action: () => { close(); setTheme?.(theme === "light" ? "dark" : "light"); },
+      keywords: "tema theme gelap terang dark light mode warna",
+    },
+  ], [lang, theme, onCreateInvoice, onOpenAuditLog, onSimulateWebhook, toggleLang, setTheme, downloadReport, close]);
+
+  const matchingActions = useMemo(() => {
+    if (terms.length === 0) return allActions.slice(0, 4);
+    return allActions.filter(act => {
+      const searchStr = `${act.label} ${act.description} ${act.keywords}`.toLowerCase();
+      return terms.every(term => searchStr.includes(term));
+    });
+  }, [allActions, terms]);
+
+  // 4. Navigasi tampilan dashboard
+  const matchingViews = useMemo(() => {
+    if (terms.length === 0) return currentViews;
+    return currentViews.filter(view => {
+      const searchStr = `${view.label} ${view.description} ${view.prompt} ${view.short}`.toLowerCase();
+      return terms.every(term => searchStr.includes(term));
+    });
+  }, [currentViews, terms]);
+
+  const hasAnyResults = matchingInvoices.length > 0 || matchingActions.length > 0 || matchingViews.length > 0;
+
+  return (
+    <Dialog title={lang === "id" ? "Pusat Perintah & Pencarian" : "Command Palette & Search"} close={close}>
+      <label className="gd-search gd-command-input">
+        <Search aria-hidden="true" />
+        <input
+          type="search"
+          aria-label="Cari invoice, klien, atau perintah"
+          placeholder={lang === "id" ? "Ketik nomor invoice, klien, nominal, aksi..." : "Search invoice #, client, amount, action..."}
+          value={query}
+          onChange={event => setQuery(event.target.value)}
+          autoFocus
+        />
+      </label>
+
+      <div className="gd-quick-scroll">
+        {/* Ketika belum mengetik: Tampilkan tagihan yang perlu perhatian di bagian teratas */}
+        {terms.length === 0 && attentionInvoices.length > 0 && (
+          <div>
+            <div className="gd-quick-section-title">
+              <span className="flex items-center gap-1.5 text-[var(--gd-coral)]">
+                <TriangleAlert className="w-3.5 h-3.5" />
+                {lang === "id" ? "Perlu Tindak Lanjut Segera" : "Needs Immediate Attention"}
+              </span>
+              <span className="text-[10px] text-[var(--gd-muted)] font-mono">{attentionInvoices.length} {lang === "id" ? "tagihan" : "invoices"}</span>
+            </div>
+            <div className="gd-quick-list">
+              {attentionInvoices.slice(0, 3).map(inv => (
+                <button key={inv.id} type="button" onClick={() => { close(); onViewInvoice?.(inv); }}>
+                  <Clock3 aria-hidden="true" className="text-[var(--gd-ochre)]" />
+                  <div>
+                    <strong>{inv.invoiceNumber} · {inv.clientName}</strong>
+                    <small>{formatRupiah(inv.total)} · Jatuh tempo: {inv.dueDate}</small>
+                  </div>
+                  <span className={`gd-quick-badge ${inv.status === "OVERDUE" ? "gd-quick-badge-overdue" : "gd-quick-badge-pending"}`}>
+                    {inv.status === "OVERDUE" ? (lang === "id" ? "Jatuh Tempo" : "Overdue") : (lang === "id" ? "Tertunda" : "Pending")}
+                  </span>
+                  <ChevronRight aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Hasil Pencarian Invoice / Faktur */}
+        {matchingInvoices.length > 0 && (
+          <div>
+            <div className="gd-quick-section-title">
+              <span>{lang === "id" ? "Faktur & Tagihan Ditemukan" : "Matching Invoices"}</span>
+              <span className="text-[10px] text-[var(--gd-muted)] font-mono">{matchingInvoices.length}</span>
+            </div>
+            <div className="gd-quick-list">
+              {matchingInvoices.map(inv => (
+                <button key={inv.id} type="button" onClick={() => { close(); onViewInvoice?.(inv); }}>
+                  <FileText aria-hidden="true" className="text-[var(--gd-teal)]" />
+                  <div>
+                    <strong>{inv.invoiceNumber} · {inv.clientName}</strong>
+                    <small>{formatRupiah(inv.total)} · {inv.dueDate}</small>
+                  </div>
+                  <span className={`gd-quick-badge ${
+                    inv.status === "PAID"
+                      ? "gd-quick-badge-paid"
+                      : inv.status === "OVERDUE"
+                      ? "gd-quick-badge-overdue"
+                      : "gd-quick-badge-pending"
+                  }`}>
+                    {inv.status === "PAID"
+                      ? (lang === "id" ? "Lunas" : "Paid")
+                      : inv.status === "OVERDUE"
+                      ? (lang === "id" ? "Jatuh Tempo" : "Overdue")
+                      : (lang === "id" ? "Tertunda" : "Pending")}
+                  </span>
+                  <ChevronRight aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Hasil Aksi Cepat */}
+        {matchingActions.length > 0 && (
+          <div>
+            <div className="gd-quick-section-title">
+              <span>{lang === "id" ? "Aksi Cepat & Pintasan" : "Quick Actions & Tools"}</span>
+            </div>
+            <div className="gd-quick-list">
+              {matchingActions.map(({ id, label, description, icon: Icon, action }) => (
+                <button key={id} type="button" onClick={action}>
+                  <Icon aria-hidden="true" />
+                  <div>
+                    <strong>{label}</strong>
+                    <small>{description}</small>
+                  </div>
+                  <ChevronRight aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Navigasi Layar Dashboard */}
+        {matchingViews.length > 0 && (
+          <div>
+            <div className="gd-quick-section-title">
+              <span>{lang === "id" ? "Navigasi Layar Dashboard" : "Dashboard Views"}</span>
+            </div>
+            <div className="gd-quick-list">
+              {matchingViews.map(({ label, id, description, icon: Icon }) => (
+                <button key={id} type="button" onClick={() => { close(); select(id); }}>
+                  <Icon aria-hidden="true" />
+                  <div>
+                    <strong>{label}</strong>
+                    <small>{description}</small>
+                  </div>
+                  <ChevronRight aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Jika Tidak Ada Hasil */}
+        {!hasAnyResults && (
+          <p className="gd-empty" role="status">
+            {lang === "id" ? `Tidak ada invoice atau aksi yang cocok dengan "${query}".` : `No matching invoice or action for "${query}".`}
+          </p>
+        )}
+      </div>
+    </Dialog>
+  );
 }
 
 type Modal = "search" | "notifications" | { itemId: string } | null;
@@ -1870,6 +2168,18 @@ function GlassyDashboard({
   const reviewCount = invoices ? overdueOrPendingInvoices.length : work.filter(item => item.status === "Needs review").length;
   const close = () => setModal(null);
   const inspect = (item: WorkItem) => setModal({ itemId: item.id });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setModal(prev => prev === "search" ? null : "search");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const downloadReport = () => {
     if (invoices) {
       saveCsv("flowdesk-invoices.csv", [
@@ -1902,8 +2212,21 @@ function GlassyDashboard({
       <header className="gd-top">
         <div className="gd-brand"><span className="gd-logo" aria-hidden="true"><svg viewBox="0 0 28 28" fill="none"><path d="m5 22 7.4-16h3.2L23 22h-4l-5-11.4L9 22H5Z" fill="currentColor"/><path d="M10 18h8l1.4 3h-10.8l1.4-3Z" fill="currentColor"/></svg></span>
           <div><strong>{workspaceName}</strong><small>{invoices ? (userLabel || "Financial Ops") : "Workspace"}</small></div></div>
-        <button type="button" className="gd-ask" aria-label={"Search " + workspaceName + " views"} onClick={() => setModal("search")}>
-          <span className="gd-orb" aria-hidden="true" /><span className="gd-prompt" key={view}>{current.prompt}</span><Search aria-hidden="true" className="gd-ask-search" />
+        <button
+          type="button"
+          className="gd-ask"
+          aria-label={lang === "id" ? "Pusat Perintah & Pencarian" : "Command Palette & Search"}
+          onClick={() => setModal("search")}
+          title={lang === "id" ? "Buka Pencarian & Pusat Perintah (Ctrl + K)" : "Open Command Palette & Search (Ctrl + K)"}
+        >
+          <span className="gd-orb" aria-hidden="true" />
+          <span className="gd-prompt" key={lang + "-" + reviewCount}>
+            {reviewCount > 0
+              ? (lang === "id" ? `${reviewCount} tagihan perlu perhatian · Cari apa saja...` : `${reviewCount} need attention · Search anything...`)
+              : (lang === "id" ? "Cari invoice, klien, perintah..." : "Search invoices, clients, actions...")}
+          </span>
+          <span className="gd-kbd-hint" aria-hidden="true">Ctrl K</span>
+          <Search aria-hidden="true" className="gd-ask-search" />
         </button>
         <div className="gd-top-actions">
           {onCreateInvoice && (
@@ -2034,7 +2357,23 @@ function GlassyDashboard({
       </footer>
     </div>
 
-    {modal === "search" && <QuickActions workspaceName={workspaceName} select={selectView} close={close} lang={lang} />}
+    {modal === "search" && (
+      <QuickActions
+        workspaceName={workspaceName}
+        select={selectView}
+        close={close}
+        lang={lang}
+        invoices={invoices}
+        onViewInvoice={onViewInvoice}
+        onCreateInvoice={onCreateInvoice}
+        onOpenAuditLog={onOpenAuditLog}
+        onSimulateWebhook={onSimulateWebhook}
+        toggleLang={toggleLang}
+        theme={theme}
+        setTheme={setTheme}
+        downloadReport={downloadReport}
+      />
+    )}
     {modal === "notifications" && <Dialog title={invoices ? "Tagihan Perlu Perhatian" : "Notifications"} close={close}>
       <div className="gd-quick-list">
         {invoices ? (
