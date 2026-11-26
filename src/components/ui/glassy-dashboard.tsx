@@ -1253,7 +1253,7 @@ function CommandView({
               <ArrowUpRight aria-hidden="true" />
               {paidInvoices.length} / {invoices.length} Lunas
             </span>
-            <span>terverifikasi di Supabase</span>
+            <span>transaksi terverifikasi</span>
           </div>
           <div className="gd-balance-actions">
             {onCreateInvoice ? (
@@ -1448,7 +1448,7 @@ function AnalyticsView({ period, type, download, invoices, onViewInvoice, onEdit
         <div className="gd-analytics-grid">
           <Panel
             title={trend ? "Nilai Tagihan per Invoice (Rp)" : "Rincian Subtotal & Pajak"}
-            subtitle="Perbandingan nilai tagihan berdasarkan data real Supabase"
+            subtitle="Perbandingan nilai tagihan berdasarkan data transaksi aktif"
           >
             <StackChart
               title="Nilai tagihan per invoice"
@@ -1858,7 +1858,7 @@ function QuickActions({
     {
       id: "action-audit",
       label: lang === "id" ? "Log Audit & Jejak Aktivitas" : "Audit Log & Activity History",
-      description: lang === "id" ? "Lihat riwayat pembuatan tagihan dan sinkronisasi Supabase" : "View invoice creation and Supabase sync logs",
+      description: lang === "id" ? "Lihat riwayat pembuatan tagihan dan aktivitas akun" : "View invoice creation and account activity logs",
       icon: History,
       action: () => { close(); onOpenAuditLog?.(); },
       keywords: "audit log riwayat aktivitas history jejak supabase",
@@ -2269,7 +2269,7 @@ function GlassyDashboard({
                 <LogOut aria-hidden="true" />
               </button>
             ) : (
-              <Link href="/login" className="gd-icon-button" title="Masuk dengan Supabase Auth" aria-label="Masuk">
+              <Link href="/login" className="gd-icon-button" title={lang === "id" ? "Masuk ke Akun" : "Sign In"} aria-label="Masuk">
                 <LogIn aria-hidden="true" />
               </Link>
             )
