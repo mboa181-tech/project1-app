@@ -2045,7 +2045,7 @@ type Modal = "search" | "notifications" | { itemId: string } | null;
 
 function GlassyDashboard({
   backgroundImage = studioPhoto,
-  backgroundCredit = backgroundImage === studioPhoto ? { label: "Photo on Unsplash", href: "https://unsplash.com/photos/empty-brown-wooden-table-near-glass-window-e0oJLc5FYsg" } : undefined,
+  backgroundCredit,
   workspaceName = "ATLAS",
   panelFrost = 12,
   initialTheme = "light",
@@ -2334,8 +2334,20 @@ function GlassyDashboard({
         </main>
         <Dock active={active} select={selectView} lang={lang} />
       </div>
-      <footer className="gd-footer"><span>{invoices ? "FlowDesk Operations · Next.js 15 & Supabase PostgreSQL" : "Sample workspace"}</span>{backgroundCredit &&
-        <a href={backgroundCredit.href} target="_blank" rel="noreferrer">{backgroundCredit.label}<ArrowUpRight aria-hidden="true" /></a>}
+      <footer className="gd-footer">
+        <span>
+          {lang === "id"
+            ? "© 2026 FlowDesk • Sistem Operasi Finansial & Penagihan B2B"
+            : "© 2026 FlowDesk • Enterprise Financial Operations & Invoicing"}
+        </span>
+        {backgroundCredit ? (
+          <a href={backgroundCredit.href} target="_blank" rel="noreferrer">{backgroundCredit.label}<ArrowUpRight aria-hidden="true" /></a>
+        ) : (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, opacity: 0.9 }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--gd-teal)", boxShadow: "0 0 6px var(--gd-teal)" }} />
+            {lang === "id" ? "Sistem Aktif & Terenkripsi" : "All Systems Operational"}
+          </span>
+        )}
       </footer>
     </div>
 
