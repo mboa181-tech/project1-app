@@ -90,6 +90,7 @@ export function validateInvoicePayload(payload: unknown): { valid: boolean; invo
   const raw = payload as Record<string, any>;
 
   const id = sanitizeString(raw.id || `inv-${Date.now()}`, 64);
+  const userId = sanitizeString(raw.userId || "", 128);
   const invoiceNumber = sanitizeString(raw.invoiceNumber, 50);
   const clientName = sanitizeString(raw.clientName, 120);
   const clientEmail = (raw.clientEmail || "").trim();
@@ -135,6 +136,7 @@ export function validateInvoicePayload(payload: unknown): { valid: boolean; invo
 
   const cleanInvoice: Invoice = {
     id,
+    userId: userId || undefined,
     invoiceNumber,
     clientName,
     clientEmail: clientEmail.toLowerCase(),

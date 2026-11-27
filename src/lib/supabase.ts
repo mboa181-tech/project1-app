@@ -56,6 +56,7 @@ export const supabase = client;
 export function mapFromDb(row: any): Invoice {
   return {
     id: row.id,
+    userId: row.user_id || undefined,
     invoiceNumber: row.invoice_number,
     clientName: row.client_name,
     clientEmail: row.client_email,
@@ -75,6 +76,7 @@ export function mapFromDb(row: any): Invoice {
 export function mapToDb(inv: Invoice) {
   return {
     id: inv.id,
+    user_id: inv.userId || "default_user",
     invoice_number: inv.invoiceNumber,
     client_name: inv.clientName,
     client_email: inv.clientEmail,

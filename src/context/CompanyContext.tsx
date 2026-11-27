@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 
 export interface CompanyProfile {
   companyName: string;
@@ -39,30 +40,43 @@ interface CompanyContextType {
 
 const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 
-const STORAGE_KEY = "flowdesk_company_profile_v1";
-
 export function CompanyProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const userKey = user?.id || user?.email || "default_user";
+  const storageKey = `flowdesk_company_profile_${userKey}`;
+
+  const baseDefault: CompanyProfile = {
+    ...defaultCompanyProfile,
+    companyName: user?.user_metadata?.full_name
+      ? `${user.user_metadata.full_name} Workspace`
+      : defaultCompanyProfile.companyName,
+    billingEmail: user?.email || defaultCompanyProfile.billingEmail,
+  };
+
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile>(defaultCompanyProfile);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
-        setCompanyProfile((prev) => ({ ...prev, ...parsed }));
+        setCompanyProfile({ ...baseDefault, ...parsed });
+      } else {
+        setCompanyProfile(baseDefault);
       }
     } catch (e) {
       console.warn("Failed to load company profile from storage", e);
+      setCompanyProfile(baseDefault);
     }
     setMounted(true);
-  }, []);
+  }, [storageKey]);
 
   const updateCompanyProfile = (updated: Partial<CompanyProfile>) => {
     setCompanyProfile((prev) => {
       const next = { ...prev, ...updated };
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        localStorage.setItem(storageKey, JSON.stringify(next));
       } catch (e) {
         console.warn("Failed to save company profile to storage", e);
       }
@@ -71,9 +85,9 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetCompanyProfile = () => {
-    setCompanyProfile(defaultCompanyProfile);
+    setCompanyProfile(baseDefault);
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(storageKey);
     } catch (e) {}
   };
 

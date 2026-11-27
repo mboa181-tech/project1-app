@@ -67,19 +67,35 @@ export default function PublicPaymentPage() {
   useEffect(() => {
     async function fetchInvoice() {
       try {
-        const res = await fetch("/api/invoices");
+        const res = await fetch(`/api/invoices?id=${encodeURIComponent(invoiceId)}`);
         if (res.ok) {
           const data = await res.json();
-          const found = data.invoices?.find(
-            (inv: Invoice) =>
-              inv.id.toLowerCase() === invoiceId?.toLowerCase() ||
-              inv.invoiceNumber.toLowerCase() === invoiceId?.toLowerCase()
-          );
-          if (found) {
-            setInvoice(found);
-            setCardName(found.clientName);
+          if (data.invoice) {
+            setInvoice(data.invoice);
+            setCardName(data.invoice.clientName);
             setLoading(false);
             return;
+          }
+        }
+      } catch (e) {}
+
+      // Fallback check in user-partitioned local storage
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith("flowdesk_invoices_")) {
+            const parsed = JSON.parse(localStorage.getItem(key) || "[]");
+            const found = parsed.find(
+              (inv: Invoice) =>
+                inv.id.toLowerCase() === invoiceId?.toLowerCase() ||
+                inv.invoiceNumber.toLowerCase() === invoiceId?.toLowerCase()
+            );
+            if (found) {
+              setInvoice(found);
+              setCardName(found.clientName);
+              setLoading(false);
+              return;
+            }
           }
         }
       } catch (e) {}

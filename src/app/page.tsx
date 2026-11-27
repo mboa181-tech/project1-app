@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Invoice } from "@/lib/types";
+import { Invoice, InvoiceStatus } from "@/lib/types";
 import { initialInvoices, initialDemoUsers } from "@/lib/mock-data";
 import { GlassyDashboard } from "@/components/ui/glassy-dashboard";
 import { InvoiceModal } from "@/components/InvoiceModal";
@@ -20,7 +20,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { lang } = useLanguage();
   const { user, loading, signOut } = useAuth();
-  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
@@ -28,6 +28,10 @@ export default function DashboardPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const userKey = user?.id || user?.email || "default_user";
+  const invoiceStorageKey = `flowdesk_invoices_${userKey}`;
+  const auditStorageKey = `flowdesk_audit_${userKey}`;
 
   const actorName =
     user?.user_metadata?.full_name || user?.email || initialDemoUsers[0].name;
@@ -47,11 +51,14 @@ export default function DashboardPage() {
     if (!user) return;
     async function loadInvoices() {
       try {
-        const res = await fetch("/api/invoices");
+        const res = await fetch(`/api/invoices?userId=${encodeURIComponent(userKey)}`);
         if (res.ok) {
           const data = await res.json();
-          if (data.invoices && data.invoices.length > 0) {
+          if (Array.isArray(data.invoices)) {
             setInvoices(data.invoices);
+            try {
+              localStorage.setItem(invoiceStorageKey, JSON.stringify(data.invoices));
+            } catch {}
             return;
           }
         }
@@ -60,36 +67,53 @@ export default function DashboardPage() {
       }
 
       try {
-        const local = localStorage.getItem("flowdesk_invoices_v1");
+        const local = localStorage.getItem(invoiceStorageKey);
         if (local) {
           setInvoices(JSON.parse(local));
+          return;
         }
       } catch {}
+
+      // If demo user, seed initial sample data
+      if (userKey === "usr_demo" || user?.email?.includes("demo") || user?.email === "admin@flowdesk.app") {
+        const demoData = initialInvoices.map((inv) => ({ ...inv, userId: userKey }));
+        setInvoices(demoData);
+        try {
+          localStorage.setItem(invoiceStorageKey, JSON.stringify(demoData));
+        } catch {}
+      } else {
+        // New tenant starts completely fresh
+        setInvoices([]);
+      }
     }
 
     loadInvoices();
-  }, []);
+  }, [userKey]);
 
   useEffect(() => {
     try {
-      const savedAudit = localStorage.getItem("flowdesk_audit_v1");
+      const savedAudit = localStorage.getItem(auditStorageKey);
       if (savedAudit) {
         setAuditLogs(JSON.parse(savedAudit));
+      } else {
+        setAuditLogs([]);
       }
     } catch {}
-  }, []);
+  }, [auditStorageKey]);
 
   useEffect(() => {
+    if (!user) return;
     try {
-      localStorage.setItem("flowdesk_invoices_v1", JSON.stringify(invoices));
+      localStorage.setItem(invoiceStorageKey, JSON.stringify(invoices));
     } catch {}
-  }, [invoices]);
+  }, [invoices, invoiceStorageKey, user]);
 
   useEffect(() => {
+    if (!user) return;
     try {
-      localStorage.setItem("flowdesk_audit_v1", JSON.stringify(auditLogs));
+      localStorage.setItem(auditStorageKey, JSON.stringify(auditLogs));
     } catch {}
-  }, [auditLogs]);
+  }, [auditLogs, auditStorageKey, user]);
 
   const recordAudit = (
     action: AuditEntry["action"],
@@ -117,22 +141,32 @@ export default function DashboardPage() {
   };
 
   const handleCreateInvoice = async (newInvoice: Invoice) => {
-    setInvoices((prev) => [newInvoice, ...prev]);
+    const invoiceWithUser: Invoice = {
+      ...newInvoice,
+      userId: userKey,
+    };
+    setInvoices((prev) => {
+      const next = [invoiceWithUser, ...prev];
+      try {
+        localStorage.setItem(invoiceStorageKey, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
     recordAudit(
       "CREATE",
-      newInvoice.invoiceNumber,
-      `${newInvoice.clientName} — Rp ${newInvoice.total.toLocaleString("id-ID")}`
+      invoiceWithUser.invoiceNumber,
+      `${invoiceWithUser.clientName} — Rp ${invoiceWithUser.total.toLocaleString("id-ID")}`
     );
-    showToast(`Tagihan ${newInvoice.invoiceNumber} diterbitkan!`);
+    showToast(`Tagihan ${invoiceWithUser.invoiceNumber} diterbitkan!`);
 
     try {
       const res = await fetch("/api/invoices", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newInvoice),
+        body: JSON.stringify(invoiceWithUser),
       });
       if (res.ok) {
-        showToast(`Tagihan ${newInvoice.invoiceNumber} berhasil disimpan.`);
+        showToast(`Tagihan ${invoiceWithUser.invoiceNumber} berhasil disimpan.`);
       } else {
         const errData = await res.json().catch(() => ({}));
         showToast(`Gagal menyimpan tagihan: ${errData.error || "Server error"}`);
@@ -143,21 +177,29 @@ export default function DashboardPage() {
   };
 
   const handleUpdateInvoice = async (updatedInvoice: Invoice) => {
-    setInvoices((prev) =>
-      prev.map((inv) => (inv.id === updatedInvoice.id ? updatedInvoice : inv))
-    );
+    const invoiceWithUser = {
+      ...updatedInvoice,
+      userId: userKey,
+    };
+    setInvoices((prev) => {
+      const next = prev.map((inv) => (inv.id === invoiceWithUser.id ? invoiceWithUser : inv));
+      try {
+        localStorage.setItem(invoiceStorageKey, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
     recordAudit(
       "UPDATE",
-      updatedInvoice.invoiceNumber,
-      `${updatedInvoice.clientName} — Rp ${updatedInvoice.total.toLocaleString("id-ID")}`
+      invoiceWithUser.invoiceNumber,
+      `${invoiceWithUser.clientName} — Rp ${invoiceWithUser.total.toLocaleString("id-ID")}`
     );
-    showToast(`Perubahan pada ${updatedInvoice.invoiceNumber} disimpan!`);
+    showToast(`Perubahan pada ${invoiceWithUser.invoiceNumber} disimpan!`);
 
     try {
       await fetch("/api/invoices", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedInvoice),
+        body: JSON.stringify(invoiceWithUser),
       });
     } catch (err) {
       console.error("API update error:", err);
@@ -168,7 +210,7 @@ export default function DashboardPage() {
     const target = invoices.find((inv) => inv.id === invoiceId);
     if (!target) return;
 
-    const nextStatus =
+    const nextStatus: InvoiceStatus =
       target.status === "PAID"
         ? "PENDING"
         : target.status === "PENDING"
@@ -177,9 +219,13 @@ export default function DashboardPage() {
         ? "PENDING"
         : "PAID";
 
-    setInvoices((prev) =>
-      prev.map((inv) => (inv.id === invoiceId ? { ...inv, status: nextStatus } : inv))
-    );
+    setInvoices((prev) => {
+      const next = prev.map((inv) => (inv.id === invoiceId ? { ...inv, status: nextStatus } : inv));
+      try {
+        localStorage.setItem(invoiceStorageKey, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
     recordAudit("STATUS", target.invoiceNumber, `${target.status} → ${nextStatus}`);
     showToast(`Status ${target.invoiceNumber} diubah ke ${nextStatus}.`);
 
@@ -196,7 +242,13 @@ export default function DashboardPage() {
 
   const handleDeleteInvoice = async (invoiceId: string) => {
     const target = invoices.find((inv) => inv.id === invoiceId);
-    setInvoices((prev) => prev.filter((inv) => inv.id !== invoiceId));
+    setInvoices((prev) => {
+      const next = prev.filter((inv) => inv.id !== invoiceId);
+      try {
+        localStorage.setItem(invoiceStorageKey, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
     if (target) {
       recordAudit("DELETE", target.invoiceNumber, target.clientName);
     }

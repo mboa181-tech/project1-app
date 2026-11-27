@@ -2,9 +2,10 @@
 -- FlowDesk Database Schema (PostgreSQL / Supabase)
 -- ==============================================================================
 
--- 1. Create Invoices Table
+-- 1. Create Invoices Table (Multi-Tenant Architecture)
 create table if not exists public.invoices (
   id text primary key,
+  user_id text not null default 'default_user',
   invoice_number text not null unique,
   client_name text not null,
   client_email text not null,
@@ -21,7 +22,8 @@ create table if not exists public.invoices (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 2. Indexes for High-Performance Queries
+-- 2. Indexes for High-Performance Queries & Tenant Isolation
+create index if not exists idx_invoices_user_id on public.invoices(user_id);
 create index if not exists idx_invoices_status on public.invoices(status);
 create index if not exists idx_invoices_due_date on public.invoices(due_date);
 create index if not exists idx_invoices_created_at on public.invoices(created_at desc);

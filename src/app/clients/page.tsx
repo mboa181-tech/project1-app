@@ -50,7 +50,7 @@ export default function ClientsPage() {
   const router = useRouter();
   const { t, lang, toggleLang } = useLanguage();
   const { user, loading } = useAuth();
-  const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isDark, setIsDark] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,6 +58,9 @@ export default function ClientsPage() {
   const [selectedClientForHistory, setSelectedClientForHistory] = useState<ClientRecord | null>(null);
   const [selectedInvoiceForDetail, setSelectedInvoiceForDetail] = useState<Invoice | null>(null);
   const [defaultClientForInvoice, setDefaultClientForInvoice] = useState<{ name: string; email: string } | null>(null);
+
+  const userKey = user?.id || user?.email || "default_user";
+  const invoiceStorageKey = `flowdesk_invoices_${userKey}`;
 
   // Auth Guard: Redirect unauthenticated visitors to login
   useEffect(() => {
@@ -78,25 +81,36 @@ export default function ClientsPage() {
     if (!user) return;
     async function fetchInvoices() {
       try {
-        const res = await fetch("/api/invoices");
+        const res = await fetch(`/api/invoices?userId=${encodeURIComponent(userKey)}`);
         if (res.ok) {
           const data = await res.json();
-          if (data.invoices && data.invoices.length > 0) {
+          if (Array.isArray(data.invoices)) {
             setInvoices(data.invoices);
+            try {
+              localStorage.setItem(invoiceStorageKey, JSON.stringify(data.invoices));
+            } catch {}
             return;
           }
         }
       } catch (e) {}
 
       try {
-        const local = localStorage.getItem("flowdesk_invoices_v1");
+        const local = localStorage.getItem(invoiceStorageKey);
         if (local) {
           setInvoices(JSON.parse(local));
+          return;
         }
       } catch {}
+
+      if (userKey === "usr_demo" || user?.email?.includes("demo") || user?.email === "admin@flowdesk.app") {
+        const demoData = initialInvoices.map((inv) => ({ ...inv, userId: userKey }));
+        setInvoices(demoData);
+      } else {
+        setInvoices([]);
+      }
     }
     fetchInvoices();
-  }, []);
+  }, [userKey]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -104,20 +118,27 @@ export default function ClientsPage() {
   };
 
   const handleCreateInvoice = async (newInvoice: Invoice) => {
-    setInvoices((prev) => [newInvoice, ...prev]);
-    try {
-      localStorage.setItem("flowdesk_invoices_v1", JSON.stringify([newInvoice, ...invoices]));
-    } catch {}
-    showToast(`Invoice ${newInvoice.invoiceNumber} sedang disimpan...`);
+    const invoiceWithUser: Invoice = {
+      ...newInvoice,
+      userId: userKey,
+    };
+    setInvoices((prev) => {
+      const next = [invoiceWithUser, ...prev];
+      try {
+        localStorage.setItem(invoiceStorageKey, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    showToast(`Invoice ${invoiceWithUser.invoiceNumber} sedang disimpan...`);
 
     try {
       const res = await fetch("/api/invoices", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newInvoice),
+        body: JSON.stringify(invoiceWithUser),
       });
       if (res.ok) {
-        showToast(`Invoice ${newInvoice.invoiceNumber} berhasil disimpan!`);
+        showToast(`Invoice ${invoiceWithUser.invoiceNumber} berhasil disimpan!`);
       } else {
         const errData = await res.json().catch(() => ({}));
         showToast(`Gagal simpan: ${errData.error || "Kesalahan database"}`);

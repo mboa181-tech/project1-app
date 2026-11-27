@@ -10,9 +10,12 @@ import {
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 // In-memory fallback cache for development/demo when Supabase keys aren't set
-let localInvoicesStore: Invoice[] = [...initialInvoices];
+let localInvoicesStore: Invoice[] = initialInvoices.map((inv) => ({
+  ...inv,
+  userId: "usr_demo",
+}));
 
-// GET /api/invoices - Fetch all invoices
+// GET /api/invoices - Fetch invoices (Multi-Tenant isolated by userId or single invoice by id)
 export async function GET(req: NextRequest) {
   const clientIp = getClientIp(req);
   const rateLimit = checkRateLimit(`get_${clientIp}`, 120, 60000);
@@ -23,29 +26,80 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  if (isSupabaseConfigured && supabase) {
-    try {
-      const { data, error } = await supabase
-        .from("invoices")
-        .select("*")
-        .order("created_at", { ascending: false });
+  const { searchParams } = new URL(req.url);
+  const singleId = searchParams.get("id");
+  const rawUserId = searchParams.get("userId");
+  const userId = rawUserId ? sanitizeString(rawUserId, 128) : null;
 
-      if (error) {
-        console.error("Supabase query error (masked from client):", error.message);
-      } else if (data && data.length > 0) {
-        return NextResponse.json({
-          source: "supabase",
-          invoices: data.map(mapFromDb),
-        });
+  // 1. Single Invoice Lookup (for public payment portal /pay/[id])
+  if (singleId) {
+    const cleanId = sanitizeString(singleId, 64);
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("invoices")
+          .select("*")
+          .or(`id.eq.${cleanId},invoice_number.eq.${cleanId}`)
+          .maybeSingle();
+
+        if (data && !error) {
+          return NextResponse.json({
+            source: "supabase",
+            invoice: mapFromDb(data),
+          });
+        }
+      } catch (err) {
+        console.error("Single invoice Supabase query exception:", err);
       }
-    } catch (err) {
-      console.error("Internal query exception (masked from client):", err);
     }
+
+    const found = localInvoicesStore.find(
+      (inv) =>
+        inv.id.toLowerCase() === cleanId.toLowerCase() ||
+        inv.invoiceNumber.toLowerCase() === cleanId.toLowerCase()
+    );
+
+    return NextResponse.json({
+      source: "local-persistent",
+      invoice: found || null,
+    });
   }
 
+  // 2. Multi-Tenant Workspace Lookup (isolated by userId)
+  if (userId) {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("invoices")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
+
+        if (!error && data) {
+          return NextResponse.json({
+            source: "supabase",
+            invoices: data.map(mapFromDb),
+          });
+        }
+      } catch (err) {
+        console.error("Supabase user-isolated query exception:", err);
+      }
+    }
+
+    const userInvoices = localInvoicesStore.filter(
+      (inv) => (inv.userId || "usr_demo") === userId
+    );
+
+    return NextResponse.json({
+      source: "local-persistent",
+      invoices: userInvoices,
+    });
+  }
+
+  // 3. Fallback: unauthenticated or no userId provided -> return empty array for privacy
   return NextResponse.json({
     source: "local-persistent",
-    invoices: localInvoicesStore,
+    invoices: [],
   });
 }
 
