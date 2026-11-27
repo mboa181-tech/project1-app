@@ -119,10 +119,10 @@ export default function DashboardPage() {
         body: JSON.stringify(newInvoice),
       });
       if (res.ok) {
-        showToast(`Tagihan ${newInvoice.invoiceNumber} disimpan ke Supabase.`);
+        showToast(`Tagihan ${newInvoice.invoiceNumber} berhasil disimpan.`);
       } else {
         const errData = await res.json().catch(() => ({}));
-        showToast(`Gagal simpan ke Supabase: ${errData.error || "Server error"}`);
+        showToast(`Gagal menyimpan tagihan: ${errData.error || "Server error"}`);
       }
     } catch (err) {
       console.error("API error:", err);

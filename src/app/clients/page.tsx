@@ -107,7 +107,7 @@ export default function ClientsPage() {
         body: JSON.stringify(newInvoice),
       });
       if (res.ok) {
-        showToast(`Invoice ${newInvoice.invoiceNumber} tersimpan di Supabase!`);
+        showToast(`Invoice ${newInvoice.invoiceNumber} berhasil disimpan!`);
       } else {
         const errData = await res.json().catch(() => ({}));
         showToast(`Gagal simpan: ${errData.error || "Kesalahan database"}`);

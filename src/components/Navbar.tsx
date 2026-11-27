@@ -57,7 +57,7 @@ export function Navbar({
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-200 shrink-0" />
             <span>
-              <strong>{t("authVerifiedSession")} (Supabase Auth):</strong>{" "}
+              <strong>{t("authVerifiedSession")}:</strong>{" "}
               {t("authSignedInAs")} <u>{displayName}</u> ({user.email})
             </span>
           </div>

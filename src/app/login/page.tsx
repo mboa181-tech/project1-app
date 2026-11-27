@@ -43,8 +43,8 @@ export default function LoginPage() {
     if (!isSupabaseConfigured || !supabase) {
       setErrorMsg(
         lang === "id"
-          ? "Supabase belum dikonfigurasi di environment variables."
-          : "Supabase is not configured in environment variables."
+          ? "Layanan autentikasi cloud sedang dalam mode pratinjau lokal."
+          : "Cloud authentication service is currently in local preview mode."
       );
       return;
     }
@@ -263,7 +263,11 @@ export default function LoginPage() {
 
           <div className="pt-2 border-t border-[var(--gd-line)] flex items-center justify-center gap-2 text-[11px] text-[var(--gd-muted)]">
             <ShieldCheck className="w-3.5 h-3.5 text-[var(--gd-teal)]" />
-            <span>Supabase Auth · JWT Security & Row Level Isolation</span>
+            <span>
+              {lang === "id"
+                ? "Sesi Terenkripsi & Terlindungi Keamanan Berlapis (SHA-256)"
+                : "End-to-End Encrypted Session · 256-bit Security"}
+            </span>
           </div>
         </div>
       </main>
