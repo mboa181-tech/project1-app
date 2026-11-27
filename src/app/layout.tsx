@@ -5,8 +5,20 @@ import { AuthProvider } from "@/context/AuthContext";
 import { CompanyProvider } from "@/context/CompanyContext";
 
 export const metadata: Metadata = {
-  title: "FlowDesk — Modern B2B Invoicing & Financial Operations Engine",
-  description: "Production-grade, multi-tenant billing & financial ops platform engineered with Next.js 15, TypeScript, and Tailwind CSS.",
+  title: "FlowDesk — Portal Penagihan & Pembayaran Faktur Resmi",
+  description: "Portal resmi penagihan dan pembayaran faktur digital terpercaya. Layanan transaksi bisnis aman dengan verifikasi pembayaran instan.",
+  openGraph: {
+    title: "FlowDesk — Portal Penagihan & Pembayaran Faktur Resmi",
+    description: "Portal resmi penagihan dan pembayaran faktur digital terpercaya. Layanan transaksi bisnis aman dengan verifikasi pembayaran instan.",
+    url: "https://flowdesk.aads.my.id",
+    siteName: "FlowDesk Invoicing Portal",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "FlowDesk — Portal Penagihan & Pembayaran Faktur Resmi",
+    description: "Portal resmi penagihan dan pembayaran faktur digital terpercaya.",
+  },
 };
 
 export default function RootLayout({

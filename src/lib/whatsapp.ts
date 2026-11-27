@@ -159,7 +159,7 @@ export function generateWhatsAppReceiptMessage(
     `━━━━━━━━━━━━━━━━━━`,
     `📄 *No. Invoice:* ${invoice.invoiceNumber}`,
     `💰 *Jumlah Lunas:* ${formattedTotal}`,
-    `✅ *Status:* LUNAS & TERSELESAIKAN (Terverifikasi SHA-256)`,
+    `✅ *Status:* LUNAS & TERVERIFIKASI SISTEM RESMI`,
     `━━━━━━━━━━━━━━━━━━`,
     ``,
     `Akses bukti pelunasan digital resmi:`,
