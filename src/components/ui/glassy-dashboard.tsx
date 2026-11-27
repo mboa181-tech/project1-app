@@ -1508,9 +1508,9 @@ function AnalyticsView({ period, type, download, invoices, onViewInvoice, onEdit
               </span>
               <div>
                 <strong>Laporan Tagihan FlowDesk (IDR)</strong>
-                <small>{invoices.length} tagihan aktif · Unduh format Excel (.xls)</small>
+                <small>{invoices.length} tagihan aktif · Unduh format Excel (.xlsx)</small>
               </div>
-              <button type="button" className="gd-icon-button" aria-label="Unduh CSV" onClick={download}>
+              <button type="button" className="gd-icon-button" aria-label="Unduh Excel" onClick={download}>
                 <Download aria-hidden="true" />
               </button>
             </div>
@@ -1734,83 +1734,265 @@ function routeFromHash(): View {
   return routeOrder.find(view => view === id) ?? "command";
 }
 
+const crcTable = new Uint32Array(256);
+for (let i = 0; i < 256; i++) {
+  let c = i;
+  for (let k = 0; k < 8; k++) {
+    c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+  }
+  crcTable[i] = c >>> 0;
+}
+
+function crc32(buf: Uint8Array): number {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < buf.length; i++) {
+    c = crcTable[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+  }
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+function makeZip(files: { name: string; data: string | Uint8Array }[]): Uint8Array {
+  const encoder = new TextEncoder();
+  const fileEntries = files.map(f => {
+    const nameBytes = encoder.encode(f.name);
+    const dataBytes = typeof f.data === "string" ? encoder.encode(f.data) : f.data;
+    const crc = crc32(dataBytes);
+    return { nameBytes, dataBytes, crc, size: dataBytes.length };
+  });
+
+  let totalSize = 0;
+  for (const f of fileEntries) {
+    totalSize += 30 + f.nameBytes.length + f.size;
+    totalSize += 46 + f.nameBytes.length;
+  }
+  totalSize += 22;
+
+  const out = new Uint8Array(totalSize);
+  const view = new DataView(out.buffer);
+  let localOffset = 0;
+  const localOffsets: number[] = [];
+
+  for (const f of fileEntries) {
+    localOffsets.push(localOffset);
+    view.setUint32(localOffset, 0x04034b50, true);
+    view.setUint16(localOffset + 4, 20, true);
+    view.setUint16(localOffset + 6, 0, true);
+    view.setUint16(localOffset + 8, 0, true);
+    view.setUint16(localOffset + 10, 0, true);
+    view.setUint16(localOffset + 12, 0, true);
+    view.setUint32(localOffset + 14, f.crc, true);
+    view.setUint32(localOffset + 18, f.size, true);
+    view.setUint32(localOffset + 22, f.size, true);
+    view.setUint16(localOffset + 26, f.nameBytes.length, true);
+    view.setUint16(localOffset + 28, 0, true);
+    out.set(f.nameBytes, localOffset + 30);
+    out.set(f.dataBytes, localOffset + 30 + f.nameBytes.length);
+    localOffset += 30 + f.nameBytes.length + f.size;
+  }
+
+  let centralOffset = localOffset;
+  const centralDirStart = centralOffset;
+
+  for (let i = 0; i < fileEntries.length; i++) {
+    const f = fileEntries[i];
+    const offset = localOffsets[i];
+    view.setUint32(centralOffset, 0x02014b50, true);
+    view.setUint16(centralOffset + 4, 20, true);
+    view.setUint16(centralOffset + 6, 20, true);
+    view.setUint16(centralOffset + 8, 0, true);
+    view.setUint16(centralOffset + 10, 0, true);
+    view.setUint16(centralOffset + 12, 0, true);
+    view.setUint16(centralOffset + 14, 0, true);
+    view.setUint32(centralOffset + 16, f.crc, true);
+    view.setUint32(centralOffset + 20, f.size, true);
+    view.setUint32(centralOffset + 24, f.size, true);
+    view.setUint16(centralOffset + 28, f.nameBytes.length, true);
+    view.setUint16(centralOffset + 30, 0, true);
+    view.setUint16(centralOffset + 32, 0, true);
+    view.setUint16(centralOffset + 34, 0, true);
+    view.setUint16(centralOffset + 36, 0, true);
+    view.setUint32(centralOffset + 38, 0, true);
+    view.setUint32(centralOffset + 42, offset, true);
+    out.set(f.nameBytes, centralOffset + 46);
+    centralOffset += 46 + f.nameBytes.length;
+  }
+
+  const centralDirSize = centralOffset - centralDirStart;
+
+  view.setUint32(centralOffset, 0x06054b50, true);
+  view.setUint16(centralOffset + 4, 0, true);
+  view.setUint16(centralOffset + 6, 0, true);
+  view.setUint16(centralOffset + 8, fileEntries.length, true);
+  view.setUint16(centralOffset + 10, fileEntries.length, true);
+  view.setUint32(centralOffset + 12, centralDirSize, true);
+  view.setUint32(centralOffset + 16, centralDirStart, true);
+  view.setUint16(centralOffset + 20, 0, true);
+
+  return out;
+}
+
+function colLetter(colIdx: number): string {
+  let s = "";
+  colIdx++;
+  while (colIdx > 0) {
+    const m = (colIdx - 1) % 26;
+    s = String.fromCharCode(65 + m) + s;
+    colIdx = Math.floor((colIdx - m) / 26);
+  }
+  return s;
+}
+
+function escapeXml(str: string | number): string {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 function saveExcel(filename: string, invoices: Invoice[]) {
-  const tableRows = invoices
-    .map(
-      (inv) => `
-    <tr>
-      <td style="mso-number-format:'\\@'; padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.invoiceNumber}</td>
-      <td style="padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.clientName}</td>
-      <td style="padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.clientEmail}</td>
-      <td style="text-align: center; mso-number-format:'yyyy\\-mm\\-dd'; padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.issueDate}</td>
-      <td style="text-align: center; mso-number-format:'yyyy\\-mm\\-dd'; padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.dueDate}</td>
-      <td style="text-align: center; font-weight: bold; padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 10pt; background-color: ${
-        inv.status === "PAID"
-          ? "#d1fae5; color: #065f46"
-          : inv.status === "PENDING"
-          ? "#fef3c7; color: #92400e"
-          : inv.status === "OVERDUE"
-          ? "#fee2e2; color: #991b1b"
-          : "#f3f4f6; color: #374151"
-      };">${inv.status}</td>
-      <td style="text-align: right; mso-number-format:'\\Rp\\ #\\,\\#\\#0'; padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.subtotal}</td>
-      <td style="text-align: right; mso-number-format:'\\Rp\\ #\\,\\#\\#0'; padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.taxAmount}</td>
-      <td style="text-align: right; font-weight: bold; mso-number-format:'\\Rp\\ #\\,\\#\\#0'; padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.total}</td>
-    </tr>`
-    )
-    .join("");
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`;
 
-  const excelContent = `
-<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-<!--[if gte mso 9]>
-<xml>
-  <x:ExcelWorkbook>
-    <x:ExcelWorksheets>
-      <x:ExcelWorksheet>
-        <x:Name>Laporan Tagihan</x:Name>
-        <x:WorksheetOptions>
-          <x:DisplayGridlines/>
-        </x:WorksheetOptions>
-      </x:ExcelWorksheet>
-    </x:ExcelWorksheets>
-  </x:ExcelWorkbook>
-</xml>
-<![endif]-->
-<meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8"/>
-<style>
-  th { background-color: #0f766e; color: #ffffff; font-weight: bold; text-align: center; border: 1px solid #0d9488; height: 38px; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
-</style>
-</head>
-<body>
-  <table>
-    <thead>
-      <tr>
-        <th style="width: 150px;">No. Invoice</th>
-        <th style="width: 230px;">Klien</th>
-        <th style="width: 250px;">Email</th>
-        <th style="width: 130px;">Tgl Terbit</th>
-        <th style="width: 130px;">Jatuh Tempo</th>
-        <th style="width: 110px;">Status</th>
-        <th style="width: 170px;">Subtotal (IDR)</th>
-        <th style="width: 150px;">PPN 11% (IDR)</th>
-        <th style="width: 190px;">Total (IDR)</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${tableRows}
-    </tbody>
-  </table>
-</body>
-</html>`;
+  const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
 
-  const blob = new Blob([excelContent], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const wbRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+  const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets>
+    <sheet name="Laporan Tagihan" sheetId="1" r:id="rId1"/>
+  </sheets>
+</workbook>`;
+
+  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <numFmts count="1">
+    <numFmt numFmtId="164" formatCode="&quot;Rp &quot;#,##0"/>
+  </numFmts>
+  <fonts count="3">
+    <font><name val="Calibri"/><sz val="11"/></font>
+    <font><b/><color rgb="FFFFFFFF"/><name val="Calibri"/><sz val="11"/></font>
+    <font><b/><name val="Calibri"/><sz val="11"/></font>
+  </fonts>
+  <fills count="6">
+    <fill><patternFill patternType="none"/></fill>
+    <fill><patternFill patternType="gray125"/></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FF0F766E"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFD1FAE5"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFFEF3C7"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFFEE2E2"/></patternFill></fill>
+  </fills>
+  <borders count="2">
+    <border><left/><right/><top/><bottom/><diagonal/></border>
+    <border>
+      <left style="thin"><color rgb="FFCBD5E1"/></left>
+      <right style="thin"><color rgb="FFCBD5E1"/></right>
+      <top style="thin"><color rgb="FFCBD5E1"/></top>
+      <bottom style="thin"><color rgb="FFCBD5E1"/></bottom>
+      <diagonal/>
+    </border>
+  </borders>
+  <cellStyleXfs count="1">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+  </cellStyleXfs>
+  <cellXfs count="8">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">
+      <alignment horizontal="center" vertical="center"/>
+    </xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1">
+      <alignment horizontal="center" vertical="center"/>
+    </xf>
+    <xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1">
+      <alignment horizontal="right" vertical="center"/>
+    </xf>
+    <xf numFmtId="164" fontId="2" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1">
+      <alignment horizontal="right" vertical="center"/>
+    </xf>
+    <xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">
+      <alignment horizontal="center" vertical="center"/>
+    </xf>
+    <xf numFmtId="0" fontId="2" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">
+      <alignment horizontal="center" vertical="center"/>
+    </xf>
+    <xf numFmtId="0" fontId="2" fillId="5" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">
+      <alignment horizontal="center" vertical="center"/>
+    </xf>
+  </cellXfs>
+</styleSheet>`;
+
+  const headers = ["No. Invoice", "Klien", "Email", "Tgl Terbit", "Jatuh Tempo", "Status", "Subtotal (IDR)", "PPN 11% (IDR)", "Total (IDR)"];
+  const widths = [18, 26, 28, 14, 14, 12, 20, 18, 22];
+
+  let colsXml = "<cols>";
+  widths.forEach((w, i) => {
+    colsXml += `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`;
+  });
+  colsXml += "</cols>";
+
+  let sheetData = "<sheetData>";
+  sheetData += '<row r="1" ht="26" customHeight="1">';
+  headers.forEach((h, col) => {
+    const cellRef = colLetter(col) + "1";
+    sheetData += `<c r="${cellRef}" s="1" t="inlineStr"><is><t>${escapeXml(h)}</t></is></c>`;
+  });
+  sheetData += "</row>";
+
+  invoices.forEach((inv, rIdx) => {
+    const rowNum = rIdx + 2;
+    sheetData += `<row r="${rowNum}" ht="22" customHeight="1">`;
+    sheetData += `<c r="${colLetter(0)}${rowNum}" s="2" t="inlineStr"><is><t>${escapeXml(inv.invoiceNumber)}</t></is></c>`;
+    sheetData += `<c r="${colLetter(1)}${rowNum}" s="0" t="inlineStr"><is><t>${escapeXml(inv.clientName)}</t></is></c>`;
+    sheetData += `<c r="${colLetter(2)}${rowNum}" s="0" t="inlineStr"><is><t>${escapeXml(inv.clientEmail)}</t></is></c>`;
+    sheetData += `<c r="${colLetter(3)}${rowNum}" s="2" t="inlineStr"><is><t>${escapeXml(inv.issueDate)}</t></is></c>`;
+    sheetData += `<c r="${colLetter(4)}${rowNum}" s="2" t="inlineStr"><is><t>${escapeXml(inv.dueDate)}</t></is></c>`;
+    const statusStyle = inv.status === "PAID" ? 5 : inv.status === "PENDING" ? 6 : inv.status === "OVERDUE" ? 7 : 2;
+    sheetData += `<c r="${colLetter(5)}${rowNum}" s="${statusStyle}" t="inlineStr"><is><t>${escapeXml(inv.status)}</t></is></c>`;
+    sheetData += `<c r="${colLetter(6)}${rowNum}" s="3" t="n"><v>${inv.subtotal}</v></c>`;
+    sheetData += `<c r="${colLetter(7)}${rowNum}" s="3" t="n"><v>${inv.taxAmount}</v></c>`;
+    sheetData += `<c r="${colLetter(8)}${rowNum}" s="4" t="n"><v>${inv.total}</v></c>`;
+    sheetData += "</row>";
+  });
+  sheetData += "</sheetData>";
+
+  const worksheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  ${colsXml}
+  ${sheetData}
+</worksheet>`;
+
+  const zipBytes = makeZip([
+    { name: "[Content_Types].xml", data: contentTypes },
+    { name: "_rels/.rels", data: rels },
+    { name: "xl/_rels/workbook.xml.rels", data: wbRels },
+    { name: "xl/workbook.xml", data: workbook },
+    { name: "xl/styles.xml", data: styles },
+    { name: "xl/worksheets/sheet1.xml", data: worksheet }
+  ]);
+
+  const targetFilename = filename.endsWith(".xlsx") ? filename : filename.replace(/\.[^/.]+$/, "") + ".xlsx";
+  const blob = new Blob([zipBytes.buffer as ArrayBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = filename.endsWith(".xls") ? filename : `${filename}.xls`;
+  link.download = targetFilename;
   link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function saveCsv(filename: string, rows: (string | number)[][]) {
@@ -2288,7 +2470,7 @@ function GlassyDashboard({
 
   const downloadReport = () => {
     if (invoices) {
-      saveExcel("flowdesk-laporan-tagihan.xls", invoices);
+      saveExcel("flowdesk-laporan-tagihan.xlsx", invoices);
       return;
     }
     const stats = analytics[period];
