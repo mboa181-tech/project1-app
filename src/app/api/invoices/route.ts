@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
   const singleId = searchParams.get("id");
   const rawUserId = searchParams.get("userId");
   const userId = rawUserId ? sanitizeString(rawUserId, 128) : null;
+  const selfOnly = searchParams.get("selfOnly") === "true";
 
   // 1. Single Invoice Lookup (for public payment portal /pay/[id])
   if (singleId) {
@@ -65,94 +66,43 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // 2. Multi-Tenant Workspace Lookup (isolated by userId)
-  if (userId) {
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const { data, error } = await supabase
-          .from("invoices")
-          .select("*")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false });
+  // 2. Workspace Invoices Lookup (Supabase Cloud Database - Realtime Source of Truth)
+  if (isSupabaseConfigured && supabase) {
+    try {
+      let query = supabase
+        .from("invoices")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-        if (!error && data) {
-          if (data.length > 0) {
-            return NextResponse.json({
-              source: "supabase",
-              invoices: data.map(mapFromDb),
-            });
-          }
-
-          // If this user has 0 invoices, check if there are legacy default invoices
-          const { data: legacyData, error: legacyErr } = await supabase
-            .from("invoices")
-            .select("*")
-            .or("user_id.eq.default_user,user_id.is.null")
-            .order("created_at", { ascending: false });
-
-          if (!legacyErr && legacyData && legacyData.length > 0) {
-            return NextResponse.json({
-              source: "supabase-legacy",
-              invoices: legacyData.map(mapFromDb),
-            });
-          }
-
-          // Legitimate empty state for a new user with no invoices
-          return NextResponse.json({
-            source: "supabase",
-            invoices: [],
-          });
-        }
-
-        // Schema fallback: if user_id column does not exist in this Supabase database
-        if (error && (error.message?.includes("user_id") || error.code === "42703")) {
-          console.warn("Supabase schema does not have user_id column yet. Fetching all rows...");
-          const { data: allData, error: allErr } = await supabase
-            .from("invoices")
-            .select("*")
-            .order("created_at", { ascending: false });
-
-          if (!allErr && allData) {
-            return NextResponse.json({
-              source: "supabase",
-              invoices: allData.map(mapFromDb),
-            });
-          }
-        }
-      } catch (err) {
-        console.error("Supabase user-isolated query exception:", err);
+      if (selfOnly && userId) {
+        query = query.eq("user_id", userId);
       }
+
+      const { data, error } = await query;
+
+      if (!error && data) {
+        return NextResponse.json({
+          source: "supabase",
+          invoices: data.map(mapFromDb),
+        });
+      }
+      if (error) {
+        console.error("Supabase query error:", error);
+      }
+    } catch (err) {
+      console.error("Supabase user-isolated query exception:", err);
     }
-
-    const userInvoices = localInvoicesStore.filter(
-      (inv) => inv.userId === userId
-    );
-
-    if (userInvoices.length > 0) {
-      return NextResponse.json({
-        source: "local-persistent",
-        invoices: userInvoices,
-      });
-    }
-
-    // Fallback: check legacy in-memory data so user is never left with an empty screen
-    const legacyLocal = localInvoicesStore.filter(
-      (inv) => !inv.userId || inv.userId === "usr_demo" || inv.userId === "default_user"
-    );
-
-    const fallbackInvoices = legacyLocal.length > 0 ? legacyLocal : initialInvoices.map((inv) => ({ ...inv, userId }));
-
-    return NextResponse.json({
-      source: "local-persistent",
-      invoices: fallbackInvoices,
-    });
   }
 
-  // 3. Fallback: unauthenticated or no userId provided -> return empty array for privacy
+  // 3. Fallback: local persistent store if Supabase is offline
+  const userInvoices = selfOnly && userId
+    ? localInvoicesStore.filter((inv) => inv.userId === userId)
+    : localInvoicesStore;
+
   return NextResponse.json({
     source: isSupabaseConfigured ? "supabase" : "local-persistent",
     isSupabaseConfigured,
-    invoices: [],
+    invoices: userInvoices.length > 0 ? userInvoices : initialInvoices,
   });
 }
 
