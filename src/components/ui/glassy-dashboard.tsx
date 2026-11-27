@@ -634,6 +634,59 @@ const dashboardStyles = `
 .gd-work-facts dt { font-size: 11px; color: var(--gd-muted); }
 .gd-work-facts dd { margin: 4px 0 0; font-weight: 790; }
 
+.gd-welcome-banner {
+  margin: 0 0 16px 0;
+  padding: 14px 18px;
+  border-radius: 20px;
+  background: var(--gd-card);
+  border: 1px solid var(--gd-rim);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.gd-welcome-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.gd-welcome-avatar {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--gd-pick) 0%, var(--gd-teal) 100%);
+  color: var(--gd-pick-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 900;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  flex-shrink: 0;
+}
+.gd-welcome-text {
+  min-width: 0;
+  flex: 1;
+}
+.gd-welcome-text h2 {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--gd-ink);
+  margin: 0;
+  word-break: break-word;
+}
+.gd-welcome-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 @media (max-height: 850px) {
   .gd-stage-scroll { block-size: auto; overflow: visible; }
 }
@@ -658,49 +711,248 @@ const dashboardStyles = `
   .gd-analytics-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 760px) {
-  .gd-surround { padding-top: 10px; padding-bottom: calc(85px + env(safe-area-inset-bottom)); inline-size: calc(100% - 20px); }
+  .gd-surround {
+    padding-top: 8px;
+    padding-bottom: calc(95px + env(safe-area-inset-bottom));
+    inline-size: calc(100% - 16px);
+  }
   .gd-top {
+    display: flex;
     flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
     padding: 8px 10px;
     gap: 8px;
-    border-radius: 21px;
+    border-radius: 20px;
+    background: var(--gd-surface);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    position: sticky;
+    top: 8px;
+    z-index: 30;
   }
-  .gd-brand { order: 1; flex: 1; min-width: 0; padding-inline-start: 2px; }
-  .gd-brand strong { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 105px; }
-  .gd-brand small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 105px; }
-  .gd-top-actions { order: 2; gap: 4px; align-items: center; }
-  .gd-top-actions .gd-primary { display: none !important; }
-  .gd-top-actions .gd-icon-button { width: 35px; height: 35px; min-inline-size: 35px; min-block-size: 35px; }
-  .gd-top-actions .gd-icon-button svg { width: 15px; height: 15px; }
+  .gd-brand {
+    order: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    max-width: 125px;
+    flex-shrink: 0;
+    overflow: hidden;
+    padding-inline-start: 0;
+  }
+  .gd-brand .gd-logo {
+    width: 32px;
+    height: 32px;
+    min-inline-size: 32px;
+    min-block-size: 32px;
+    flex-shrink: 0;
+  }
+  .gd-brand div {
+    min-width: 0;
+    overflow: hidden;
+  }
+  .gd-brand strong {
+    font-size: 12px;
+    font-weight: 850;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    max-width: 80px;
+  }
+  .gd-brand small {
+    display: none !important; /* Disembunyikan di layar HP agar tidak menimpa deretan tombol aksi */
+  }
+  .gd-top-actions {
+    order: 2;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+    max-width: calc(100% - 130px);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 1px 0;
+  }
+  .gd-top-actions::-webkit-scrollbar {
+    display: none;
+  }
+  .gd-top-actions .gd-primary {
+    display: none !important;
+  }
+  .gd-top-actions .gd-icon-button {
+    width: 34px;
+    height: 34px;
+    min-inline-size: 34px;
+    min-block-size: 34px;
+    flex-shrink: 0;
+  }
+  .gd-top-actions .gd-icon-button svg {
+    width: 15px;
+    height: 15px;
+  }
   .gd-ask {
     order: 3;
     width: 100%;
     max-inline-size: 100%;
     min-inline-size: 100%;
-    min-block-size: 39px;
+    min-block-size: 38px;
+    margin-top: 2px;
   }
-  .gd-stage { border-radius: 23px; }
-  .gd-stage-scroll { block-size: auto; padding: 15px 12px calc(90px + env(safe-area-inset-bottom)); overflow: visible; touch-action: auto; }
-  .gd-view-head { align-items: flex-start; flex-direction: column; gap: 8px; margin-bottom: 14px; }
-  .gd-view-head h1 { font-size: 26px; }
-  .gd-view-head p { font-size: 11.5px; margin-top: 4px; }
-  .gd-view-actions { justify-content: flex-start; width: 100%; }
-  .gd-view-actions .gd-export { width: 100%; justify-content: center; }
-  .gd-command-grid, .gd-analytics-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
-  .gd-command-side, .gd-command-grid > .gd-activity { grid-column: 1; }
-  .gd-metric-grid, .gd-lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .gd-stage-wrap { display: block; }
-  .gd-dock-side { display: none !important; }
-  .gd-dock-bottom { display: flex !important; position: fixed; inset: auto 8px calc(9px + env(safe-area-inset-bottom)); translate: none; justify-content: space-between; z-index: 40; }
-  .gd-dock-bottom a { flex: 1; flex-direction: column; gap: 2px; padding: 3px 4px; min-block-size: 46px; line-height: 1.2; font-size: 9px; }
-  .gd-dock-bottom a svg { width: 14px; height: 14px; }
-  .gd-dock-bottom .gd-dock-text { display: none; }
-  .gd-dock-bottom .gd-dock-short { display: inline; }
-  .gd-footer { padding-top: 9px; padding-bottom: calc(80px + env(safe-area-inset-bottom)); flex-direction: column; gap: 6px; text-align: center; }
-  .gd-period button { min-block-size: 38px; }
-  .gd-primary, .gd-secondary { min-block-size: 42px; }
-  .gd-table-scroll { max-inline-size: 100%; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
-  .gd-table-scroll table { min-inline-size: 640px; }
+  .gd-stage {
+    border-radius: 22px;
+  }
+  .gd-stage-scroll {
+    block-size: auto;
+    padding: 14px 12px calc(95px + env(safe-area-inset-bottom));
+    overflow: visible;
+    touch-action: auto;
+  }
+  .gd-view-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .gd-view-head h1 {
+    font-size: 24px;
+  }
+  .gd-view-head p {
+    font-size: 11.5px;
+    margin-top: 3px;
+  }
+  .gd-view-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+  .gd-view-actions .gd-export {
+    width: 100%;
+    justify-content: center;
+  }
+  .gd-command-grid, .gd-analytics-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .gd-command-side, .gd-command-grid > .gd-activity {
+    grid-column: 1;
+  }
+  .gd-metric-grid, .gd-lanes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .gd-stage-wrap {
+    display: block;
+    margin-top: 10px;
+  }
+  .gd-dock-side {
+    display: none !important;
+  }
+  .gd-dock-bottom {
+    display: flex !important;
+    position: fixed !important;
+    left: 8px !important;
+    right: 8px !important;
+    bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+    top: auto !important;
+    translate: none !important;
+    justify-content: space-between !important;
+    z-index: 40 !important;
+    background: var(--gd-surface) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid var(--gd-rim) !important;
+    border-radius: 999px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35) !important;
+  }
+  .gd-dock-bottom a {
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 2px;
+    min-block-size: 46px;
+    line-height: 1.2;
+    font-size: 9.5px;
+    font-weight: 700;
+  }
+  .gd-dock-bottom a svg {
+    width: 15px;
+    height: 15px;
+  }
+  .gd-dock-bottom .gd-dock-text {
+    display: none;
+  }
+  .gd-dock-bottom .gd-dock-short {
+    display: inline;
+  }
+  .gd-footer {
+    padding-top: 8px;
+    padding-bottom: calc(85px + env(safe-area-inset-bottom));
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+  }
+  .gd-period button {
+    min-block-size: 38px;
+  }
+  .gd-primary, .gd-secondary {
+    min-block-size: 40px;
+  }
+  .gd-table-tools {
+    width: 100%;
+    display: flex;
+    gap: 6px;
+  }
+  .gd-table-tools .gd-search {
+    flex: 1;
+    min-width: 0;
+  }
+  .gd-table-tools .gd-search input {
+    width: 100%;
+  }
+  .gd-table-tools .gd-filter {
+    flex-shrink: 0;
+  }
+  .gd-table-scroll {
+    max-inline-size: 100%;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pan-y;
+  }
+  .gd-table-scroll table {
+    min-inline-size: 640px;
+  }
+  .gd-welcome-banner {
+    padding: 12px 14px !important;
+    gap: 10px !important;
+    border-radius: 18px !important;
+  }
+  .gd-welcome-info {
+    width: 100% !important;
+  }
+  .gd-welcome-text h2 {
+    font-size: 14px !important;
+    word-break: break-word !important;
+  }
+  .gd-welcome-actions {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .gd-welcome-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+    min-block-size: 36px !important;
+    font-size: 11.5px !important;
+    padding: 0 8px !important;
+  }
 }
 @media (max-width: 420px) {
   .gd-panel { padding: 12px; }
@@ -2600,41 +2852,13 @@ function GlassyDashboard({
           <div className="gd-stage-scroll" ref={scrollArea}>
             {/* Executive Welcome & Account Identity Banner (Hanya di Dashboard Utama / Command Center) */}
             {invoices && view === "command" && (
-              <div
-                style={{
-                  margin: "0 0 16px 0",
-                  padding: "14px 18px",
-                  borderRadius: "20px",
-                  background: "var(--gd-card)",
-                  border: "1px solid var(--gd-rim)",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  flexWrap: "wrap",
-                  gap: "12px",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div
-                    style={{
-                      width: "38px",
-                      height: "38px",
-                      borderRadius: "14px",
-                      background: "linear-gradient(135deg, var(--gd-pick) 0%, var(--gd-teal) 100%)",
-                      color: "var(--gd-pick-ink)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "16px",
-                      fontWeight: 900,
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                    }}
-                  >
+              <div className="gd-welcome-banner">
+                <div className="gd-welcome-info">
+                  <div className="gd-welcome-avatar">
                     {(userLabel || userEmail || "U")[0].toUpperCase()}
                   </div>
-                  <div>
-                    <h2 style={{ fontSize: "15px", fontWeight: 900, color: "var(--gd-ink)", margin: 0 }}>
+                  <div className="gd-welcome-text">
+                    <h2>
                       {lang === "id"
                         ? `Selamat datang kembali, ${userLabel || userEmail?.split("@")[0] || "Owner"}!`
                         : `Welcome back, ${userLabel || userEmail?.split("@")[0] || "Owner"}!`}
@@ -2642,13 +2866,12 @@ function GlassyDashboard({
                   </div>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div className="gd-welcome-actions">
                   {onCreateInvoice && (
                     <button
                       type="button"
                       onClick={onCreateInvoice}
                       className="gd-primary"
-                      style={{ fontSize: "12px", minBlockSize: "32px", padding: "0 12px" }}
                     >
                       <Plus aria-hidden="true" style={{ width: 14, height: 14 }} />
                       <span>{lang === "id" ? "Buat Tagihan" : "New Invoice"}</span>
@@ -2659,7 +2882,6 @@ function GlassyDashboard({
                       type="button"
                       onClick={onOpenCompanySettings}
                       className="gd-secondary"
-                      style={{ fontSize: "12px", minBlockSize: "32px", padding: "0 10px" }}
                     >
                       <Building2 aria-hidden="true" style={{ width: 14, height: 14 }} />
                       <span>{lang === "id" ? "Profil PT" : "Profile"}</span>
