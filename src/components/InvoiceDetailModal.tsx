@@ -77,109 +77,112 @@ export function InvoiceDetailModal({
         aria-hidden="true"
       />
 
-      <div className="relative z-10 glass-modal rounded-[28px] max-w-3xl w-full max-h-[92vh] overflow-y-auto print:overflow-visible print:max-h-none print:shadow-none print:border-none print:bg-white print:text-black print:rounded-none print:w-full print:max-w-full">
-        {/* Header Toolbar (Hidden when printed) */}
-        <div className="p-4 sm:p-5 border-b border-[var(--gd-line)] flex items-center justify-between sticky top-0 bg-[var(--gd-surface)]/85 backdrop-blur-xl z-20 print:hidden">
-          <div className="flex items-center gap-2.5">
-            <span className="font-mono font-extrabold text-xs sm:text-sm px-3 py-1 rounded-full bg-[var(--gd-inner)] border border-[var(--gd-line)] text-[var(--gd-ink)]">
-              {invoice.invoiceNumber}
-            </span>
-            <span
-              className={`text-xs px-3 py-1 rounded-full font-bold border flex items-center gap-1.5 ${
-                isPaid
-                  ? "bg-[color-mix(in_srgb,var(--gd-teal)_15%,transparent)] text-[var(--gd-teal)] border-[color-mix(in_srgb,var(--gd-teal)_35%,transparent)]"
-                  : isPending
-                  ? "bg-[color-mix(in_srgb,var(--gd-ochre)_15%,transparent)] text-[var(--gd-ochre)] border-[color-mix(in_srgb,var(--gd-ochre)_35%,transparent)]"
-                  : "bg-[color-mix(in_srgb,var(--gd-coral)_15%,transparent)] text-[var(--gd-coral)] border-[color-mix(in_srgb,var(--gd-coral)_35%,transparent)]"
-              }`}
-            >
-              <i className="w-1.5 h-1.5 rounded-full bg-currentColor inline-block" />
-              {statusLabel}
-            </span>
-          </div>
+      <div className="relative z-10 max-w-3xl w-full my-auto print:max-w-full">
+        {/* Tombol Tutup / Kembali di Pojok Kanan Atas (Di Luar / Sudut Kotak Modal) */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="glass-icon-btn absolute -top-3 -right-2 sm:-top-3.5 sm:-right-3.5 z-30 shadow-2xl hover:scale-105 active:scale-95 hover:border-[var(--gd-coral)] hover:text-[var(--gd-coral)] transition-all print:hidden"
+          title="Tutup (Esc)"
+          aria-label="Tutup dialog"
+        >
+          <X className="w-4 h-4" />
+        </button>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {onToggleStatus && !isPaid && (
-              <button
-                type="button"
-                onClick={() => {
-                  onToggleStatus(invoice.id);
-                  onClose();
-                }}
-                className="glass-btn-teal px-3.5 py-1.5 text-xs font-bold"
+        <div className="glass-modal rounded-[28px] w-full max-h-[92vh] overflow-y-auto print:overflow-visible print:max-h-none print:shadow-none print:border-none print:bg-white print:text-black print:rounded-none print:w-full print:max-w-full">
+          {/* Header Toolbar (Hidden when printed) */}
+          <div className="p-4 sm:p-5 border-b border-[var(--gd-line)] flex flex-wrap items-center justify-between gap-3 sticky top-0 bg-[var(--gd-surface)]/85 backdrop-blur-xl z-20 print:hidden pr-10 sm:pr-5">
+            <div className="flex items-center gap-2.5">
+              <span className="font-mono font-extrabold text-xs sm:text-sm px-3 py-1 rounded-full bg-[var(--gd-inner)] border border-[var(--gd-line)] text-[var(--gd-ink)]">
+                {invoice.invoiceNumber}
+              </span>
+              <span
+                className={`text-xs px-3 py-1 rounded-full font-bold border flex items-center gap-1.5 ${
+                  isPaid
+                    ? "bg-[color-mix(in_srgb,var(--gd-teal)_15%,transparent)] text-[var(--gd-teal)] border-[color-mix(in_srgb,var(--gd-teal)_35%,transparent)]"
+                    : isPending
+                    ? "bg-[color-mix(in_srgb,var(--gd-ochre)_15%,transparent)] text-[var(--gd-ochre)] border-[color-mix(in_srgb,var(--gd-ochre)_35%,transparent)]"
+                    : "bg-[color-mix(in_srgb,var(--gd-coral)_15%,transparent)] text-[var(--gd-coral)] border-[color-mix(in_srgb,var(--gd-coral)_35%,transparent)]"
+                }`}
               >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>{t("detailMarkPaid")}</span>
-              </button>
-            )}
+                <i className="w-1.5 h-1.5 rounded-full bg-currentColor inline-block" />
+                {statusLabel}
+              </span>
+            </div>
 
-            {onEdit && (
+            <div className="flex flex-wrap items-center gap-2">
+              {onToggleStatus && !isPaid && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onToggleStatus(invoice.id);
+                    onClose();
+                  }}
+                  className="glass-btn-teal px-3.5 py-1.5 text-xs font-bold"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{t("detailMarkPaid")}</span>
+                </button>
+              )}
+
+              {onEdit && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onEdit(invoice);
+                    onClose();
+                  }}
+                  className="glass-btn-secondary px-3.5 py-1.5 text-xs font-bold"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-[var(--gd-muted)]" />
+                  <span>{t("detailEdit")}</span>
+                </button>
+              )}
+
               <button
                 type="button"
-                onClick={() => {
-                  onEdit(invoice);
-                  onClose();
-                }}
+                onClick={handleCopyLink}
+                title="Salin link portal pembayaran untuk klien"
                 className="glass-btn-secondary px-3.5 py-1.5 text-xs font-bold"
               >
-                <Pencil className="w-3.5 h-3.5 text-[var(--gd-muted)]" />
-                <span>{t("detailEdit")}</span>
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-[var(--gd-teal)]" />
+                    <span className="text-[var(--gd-teal)]">{t("detailLinkCopied")}</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-[var(--gd-muted)]" />
+                    <span>{t("detailCopyLink")}</span>
+                  </>
+                )}
               </button>
-            )}
 
-            <button
-              type="button"
-              onClick={handleCopyLink}
-              title="Salin link portal pembayaran untuk klien"
-              className="glass-btn-secondary px-3.5 py-1.5 text-xs font-bold"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-[var(--gd-teal)]" />
-                  <span className="text-[var(--gd-teal)]">{t("detailLinkCopied")}</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5 text-[var(--gd-muted)]" />
-                  <span>{t("detailCopyLink")}</span>
-                </>
-              )}
-            </button>
+              <button
+                type="button"
+                onClick={() => openWhatsAppInvoice(invoice, typeof window !== "undefined" ? window.location.origin : "", lang)}
+                title={lang === "id" ? "Kirim rincian tagihan langsung via WhatsApp" : "Send invoice details via WhatsApp"}
+                className="px-3.5 py-1.5 text-xs font-bold rounded-full flex items-center gap-1.5 transition-all shadow-sm"
+                style={{
+                  backgroundColor: "rgba(37, 211, 102, 0.14)",
+                  color: "#25D366",
+                  border: "1px solid rgba(37, 211, 102, 0.35)",
+                }}
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>{t("detailSendWhatsApp")}</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => openWhatsAppInvoice(invoice, typeof window !== "undefined" ? window.location.origin : "", lang)}
-              title={lang === "id" ? "Kirim rincian tagihan langsung via WhatsApp" : "Send invoice details via WhatsApp"}
-              className="px-3.5 py-1.5 text-xs font-bold rounded-full flex items-center gap-1.5 transition-all shadow-sm"
-              style={{
-                backgroundColor: "rgba(37, 211, 102, 0.14)",
-                color: "#25D366",
-                border: "1px solid rgba(37, 211, 102, 0.35)",
-              }}
-            >
-              <MessageCircle className="w-3.5 h-3.5" />
-              <span>{t("detailSendWhatsApp")}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="glass-btn-primary px-4 py-1.5 text-xs font-bold"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>{t("detailPrint")}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="glass-icon-btn ml-1"
-              aria-label="Tutup dialog"
-            >
-              <X className="w-4 h-4" />
-            </button>
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="glass-btn-primary px-4 py-1.5 text-xs font-bold"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>{t("detailPrint")}</span>
+              </button>
+            </div>
           </div>
-        </div>
 
         {/* Printable Standard Invoice Sheet */}
         <div className="printable-document relative p-6 sm:p-10 space-y-6 print:p-0 print:text-slate-900 print:bg-white print:space-y-5">
@@ -345,5 +348,6 @@ export function InvoiceDetailModal({
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }
