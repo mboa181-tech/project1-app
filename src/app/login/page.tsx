@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
@@ -10,7 +9,6 @@ import {
   Mail,
   Lock,
   User,
-  ArrowLeft,
   ShieldCheck,
   AlertCircle,
   CheckCircle2,
@@ -85,13 +83,19 @@ export default function LoginPage() {
 
       {/* Top Bar */}
       <header className="relative z-10 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 flex items-center justify-between">
-        <Link
-          href="/"
-          className="glass-btn-secondary px-3.5 py-1.5 text-xs font-bold"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>{t("authBackHome")}</span>
-        </Link>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full bg-[var(--gd-pick)] text-[var(--gd-pick-ink)] border border-[var(--gd-rim)] flex items-center justify-center font-black text-xs shadow-md">
+            FD
+          </div>
+          <div className="flex flex-col">
+            <span className="font-extrabold text-sm tracking-tight text-[var(--gd-ink)] leading-none">
+              FlowDesk
+            </span>
+            <span className="text-[10px] text-[var(--gd-muted)] font-medium mt-0.5">
+              Enterprise Secure Portal
+            </span>
+          </div>
+        </div>
 
         <button
           type="button"

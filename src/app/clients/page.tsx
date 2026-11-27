@@ -15,7 +15,7 @@ import {
   Mail,
   DollarSign,
   ArrowUpRight,
-  ArrowLeft,
+  LayoutDashboard,
   Plus,
   ShieldCheck,
   CheckCircle2,
@@ -162,10 +162,20 @@ export default function ClientsPage() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#090d16] text-white font-['Manrope_Variable',Manrope,sans-serif]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-[var(--gd-teal)] border-t-transparent animate-spin" />
-          <span className="text-xs font-semibold tracking-wide text-slate-400">
+      <div className="relative min-h-screen flex items-center justify-center font-['Manrope_Variable',Manrope,sans-serif]">
+        <img
+          src={studioPhoto}
+          alt=""
+          aria-hidden="true"
+          className="fixed inset-0 w-full h-full object-cover object-center pointer-events-none -z-20 filter sepia-[.22] saturate-[.78] brightness-[.86] dark:brightness-[.58]"
+        />
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 pointer-events-none -z-10 bg-gradient-to-tr from-[#493025]/45 via-transparent to-[#a2653f]/30"
+        />
+        <div className="glass-modal rounded-3xl px-6 py-5 flex flex-col items-center gap-3 shadow-2xl border border-[var(--gd-rim)]">
+          <div className="w-7 h-7 rounded-full border-2 border-[var(--gd-teal)] border-t-transparent animate-spin" />
+          <span className="text-xs font-semibold tracking-wide text-[var(--gd-ink)]">
             {lang === "id" ? "Memverifikasi sesi aman..." : "Verifying secure session..."}
           </span>
         </div>
@@ -192,11 +202,13 @@ export default function ClientsPage() {
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <Link
             href="/"
-            className="glass-icon-btn shrink-0"
-            title="Kembali ke Dashboard Utama"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-[var(--gd-ink)] bg-[var(--gd-card)]/40 hover:bg-[var(--gd-card)]/80 transition-colors border border-[var(--gd-rim)] shrink-0 shadow-sm"
+            title="Buka Dashboard Finansial"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <LayoutDashboard className="w-3.5 h-3.5 text-[var(--gd-muted)]" />
+            <span className="hidden sm:inline">Dashboard</span>
           </Link>
+          <div className="w-px h-4 bg-[var(--gd-rim)] shrink-0 hidden sm:block" />
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="w-8 h-8 shrink-0 rounded-full bg-[var(--gd-pick)] text-[var(--gd-pick-ink)] flex items-center justify-center font-bold text-xs shadow-sm">
               <Users className="w-4 h-4" />

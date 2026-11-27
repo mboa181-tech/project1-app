@@ -14,7 +14,6 @@ import {
   ShieldCheck,
   CheckCircle2,
   Lock,
-  ArrowLeft,
   Printer,
   Copy,
   Check,
@@ -171,10 +170,10 @@ export default function PublicPaymentPage() {
           </p>
           <button
             type="button"
-            onClick={() => router.push("/")}
-            className="glass-btn-primary px-5 py-2 text-xs"
+            onClick={() => window.location.reload()}
+            className="glass-btn-secondary px-5 py-2 text-xs font-semibold"
           >
-            {t("payGoDashboard")}
+            {lang === "id" ? "Muat Ulang Halaman" : "Reload Page"}
           </button>
         </div>
       </div>
@@ -200,20 +199,15 @@ export default function PublicPaymentPage() {
 
       {/* Top Security Banner (Hidden when printing) */}
       <header className="sticky top-3 sm:top-4 z-40 max-w-5xl w-[calc(100%-20px)] sm:w-[calc(100%-32px)] mx-auto glass-modal rounded-full px-3 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between text-xs shadow-lg print:hidden">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => router.push("/")}
-            className="glass-icon-btn mr-1.5"
-            title="Kembali ke Dashboard"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div className="flex items-center gap-2.5 font-black tracking-tight">
-            <span className="w-7 h-7 rounded-full bg-[var(--gd-pick)] text-[var(--gd-pick-ink)] flex items-center justify-center font-bold text-xs shadow-sm">
-              <FileText className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-2.5 font-black tracking-tight">
+          <span className="w-7 h-7 rounded-full bg-[var(--gd-pick)] text-[var(--gd-pick-ink)] flex items-center justify-center font-bold text-xs shadow-sm">
+            <ShieldCheck className="w-3.5 h-3.5" />
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs sm:text-sm font-extrabold">{companyProfile.companyName || "FlowDesk"}</span>
+            <span className="text-[10px] text-[var(--gd-muted)] font-medium hidden sm:inline">
+              • {t("payGateway")}
             </span>
-            <span className="text-xs sm:text-sm font-extrabold">{t("payGateway")}</span>
           </div>
         </div>
 

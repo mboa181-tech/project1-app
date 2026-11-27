@@ -13,6 +13,9 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
 import { Check } from "lucide-react";
 
+const studioPhoto =
+  "https://cdn.21st.dev/assets/mirror/ea/ea9270b3b7246283219ac52fa77a1213e9d1efb285d76348d3620609ba6cefa7.jpg";
+
 export default function DashboardPage() {
   const router = useRouter();
   const { lang } = useLanguage();
@@ -227,10 +230,20 @@ export default function DashboardPage() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#090d16] text-white font-['Manrope_Variable',Manrope,sans-serif]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-[var(--gd-teal)] border-t-transparent animate-spin" />
-          <span className="text-xs font-semibold tracking-wide text-slate-400">
+      <div className="relative min-h-screen flex items-center justify-center font-['Manrope_Variable',Manrope,sans-serif]">
+        <img
+          src={studioPhoto}
+          alt=""
+          aria-hidden="true"
+          className="fixed inset-0 w-full h-full object-cover object-center pointer-events-none -z-20 filter sepia-[.22] saturate-[.78] brightness-[.86] dark:brightness-[.58]"
+        />
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 pointer-events-none -z-10 bg-gradient-to-tr from-[#493025]/45 via-transparent to-[#a2653f]/30"
+        />
+        <div className="glass-modal rounded-3xl px-6 py-5 flex flex-col items-center gap-3 shadow-2xl border border-[var(--gd-rim)]">
+          <div className="w-7 h-7 rounded-full border-2 border-[var(--gd-teal)] border-t-transparent animate-spin" />
+          <span className="text-xs font-semibold tracking-wide text-[var(--gd-ink)]">
             {lang === "id" ? "Memverifikasi sesi aman..." : "Verifying secure session..."}
           </span>
         </div>
