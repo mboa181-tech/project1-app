@@ -1735,8 +1735,10 @@ function routeFromHash(): View {
 }
 
 function saveCsv(filename: string, rows: (string | number)[][]) {
-  const csv = rows.map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\r\n");
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const csvBody = rows.map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\r\n");
+  // Prepend UTF-8 BOM (\uFEFF) and Excel separator hint (sep=,) so Excel automatically splits columns on Windows
+  const excelCsv = "\uFEFFsep=,\r\n" + csvBody;
+  const url = URL.createObjectURL(new Blob([excelCsv], { type: "text/csv;charset=utf-8" }));
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;

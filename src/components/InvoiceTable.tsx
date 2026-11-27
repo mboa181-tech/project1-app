@@ -105,7 +105,7 @@ export function InvoiceTable({
       ].join(",")
     );
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n");
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFFsep=,\r\n" + [headers, ...rows].join("\r\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
