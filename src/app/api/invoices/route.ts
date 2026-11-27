@@ -30,7 +30,6 @@ export async function GET(req: NextRequest) {
   const singleId = searchParams.get("id");
   const rawUserId = searchParams.get("userId");
   const userId = rawUserId ? sanitizeString(rawUserId, 128) : null;
-  const selfOnly = searchParams.get("selfOnly") === "true";
 
   // 1. Single Invoice Lookup (for public payment portal /pay/[id])
   if (singleId) {
@@ -66,43 +65,45 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // 2. Workspace Invoices Lookup (Supabase Cloud Database - Realtime Source of Truth)
-  if (isSupabaseConfigured && supabase) {
-    try {
-      let query = supabase
-        .from("invoices")
-        .select("*")
-        .order("created_at", { ascending: false });
+  // 2. Multi-Tenant Workspace Lookup (strictly isolated by userId)
+  if (userId) {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("invoices")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
 
-      if (selfOnly && userId) {
-        query = query.eq("user_id", userId);
+        if (!error && data) {
+          return NextResponse.json({
+            source: "supabase",
+            invoices: data.map(mapFromDb),
+          });
+        }
+        if (error) {
+          console.error("Supabase user query error:", error);
+        }
+      } catch (err) {
+        console.error("Supabase user-isolated query exception:", err);
       }
-
-      const { data, error } = await query;
-
-      if (!error && data) {
-        return NextResponse.json({
-          source: "supabase",
-          invoices: data.map(mapFromDb),
-        });
-      }
-      if (error) {
-        console.error("Supabase query error:", error);
-      }
-    } catch (err) {
-      console.error("Supabase user-isolated query exception:", err);
     }
+
+    const userInvoices = localInvoicesStore.filter(
+      (inv) => inv.userId === userId
+    );
+
+    return NextResponse.json({
+      source: "local-persistent",
+      invoices: userInvoices,
+    });
   }
 
-  // 3. Fallback: local persistent store if Supabase is offline
-  const userInvoices = selfOnly && userId
-    ? localInvoicesStore.filter((inv) => inv.userId === userId)
-    : localInvoicesStore;
-
+  // 3. Fallback: unauthenticated or no userId provided -> return empty array for privacy
   return NextResponse.json({
     source: isSupabaseConfigured ? "supabase" : "local-persistent",
     isSupabaseConfigured,
-    invoices: userInvoices.length > 0 ? userInvoices : initialInvoices,
+    invoices: [],
   });
 }
 

@@ -78,39 +78,30 @@ export default function ClientsPage() {
   }, [isDark]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setInvoices([]);
+      return;
+    }
     async function fetchInvoices() {
       // 1. Try user-partitioned local storage first
       try {
         const local = localStorage.getItem(invoiceStorageKey);
         if (local) {
           const parsed = JSON.parse(local);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             setInvoices(parsed);
           }
+        } else {
+          setInvoices([]);
         }
       } catch {}
 
-      // 2. Recovery: check legacy local storage 'flowdesk_invoices_v1'
-      try {
-        const legacyLocal = localStorage.getItem("flowdesk_invoices_v1");
-        if (legacyLocal) {
-          const parsed = JSON.parse(legacyLocal);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setInvoices(parsed);
-            try {
-              localStorage.setItem(invoiceStorageKey, JSON.stringify(parsed));
-            } catch {}
-          }
-        }
-      } catch {}
-
-      // 3. Fetch from API (handles Supabase & local persistent store)
+      // 2. Fetch from API (strictly isolated by userId)
       try {
         const res = await fetch(`/api/invoices?userId=${encodeURIComponent(userKey)}`);
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.invoices) && data.invoices.length > 0) {
+          if (Array.isArray(data.invoices)) {
             setInvoices(data.invoices);
             try {
               localStorage.setItem(invoiceStorageKey, JSON.stringify(data.invoices));
@@ -119,19 +110,9 @@ export default function ClientsPage() {
           }
         }
       } catch (e) {}
-
-      // 4. Fallback starter data if empty so user is NEVER stranded with a blank screen
-      setInvoices((prev) => {
-        if (prev.length > 0) return prev;
-        const starter = initialInvoices.map((inv) => ({ ...inv, userId: userKey }));
-        try {
-          localStorage.setItem(invoiceStorageKey, JSON.stringify(starter));
-        } catch {}
-        return starter;
-      });
     }
     fetchInvoices();
-  }, [userKey]);
+  }, [userKey, user, invoiceStorageKey]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
