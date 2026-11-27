@@ -2322,51 +2322,9 @@ function GlassyDashboard({
           </button>
           {invoices && (
             isAuthenticated ? (
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
-                <div
-                  title={`Sesi aktif: ${userEmail || userLabel || "Pengguna"}`}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "3px 10px 3px 6px",
-                    borderRadius: "999px",
-                    background: "var(--gd-card)",
-                    border: "1px solid var(--gd-rim)",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                  }}
-                >
-                  <span
-                    style={{
-                      width: "24px",
-                      height: "24px",
-                      borderRadius: "999px",
-                      background: "var(--gd-pick)",
-                      color: "var(--gd-pick-ink)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "11px",
-                      fontWeight: 900,
-                      textTransform: "uppercase",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-                    }}
-                  >
-                    {(userLabel || userEmail || "U")[0]}
-                  </span>
-                  <div style={{ display: "flex", flexDirection: "column", textAlign: "left", lineHeight: 1.1 }}>
-                    <strong style={{ fontSize: "11px", fontWeight: 800, color: "var(--gd-ink)", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {userLabel || userEmail?.split("@")[0] || "Owner"}
-                    </strong>
-                    <small style={{ fontSize: "9px", color: "var(--gd-muted)", fontWeight: 600 }}>
-                      {userRole}
-                    </small>
-                  </div>
-                </div>
-                <button type="button" className="gd-icon-button" title="Keluar (Sign Out)" aria-label="Keluar" onClick={onSignOut}>
-                  <LogOut aria-hidden="true" />
-                </button>
-              </div>
+              <button type="button" className="gd-icon-button" title="Keluar (Sign Out)" aria-label="Keluar" onClick={onSignOut}>
+                <LogOut aria-hidden="true" />
+              </button>
             ) : (
               <Link href="/login" className="gd-icon-button" title={lang === "id" ? "Masuk ke Akun" : "Sign In"} aria-label="Masuk">
                 <LogIn aria-hidden="true" />
@@ -2416,31 +2374,11 @@ function GlassyDashboard({
                     {(userLabel || userEmail || "U")[0].toUpperCase()}
                   </div>
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                      <h2 style={{ fontSize: "15px", fontWeight: 900, color: "var(--gd-ink)", margin: 0 }}>
-                        {lang === "id"
-                          ? `Selamat datang kembali, ${userLabel || userEmail?.split("@")[0] || "Owner"}!`
-                          : `Welcome back, ${userLabel || userEmail?.split("@")[0] || "Owner"}!`}
-                      </h2>
-                      <span
-                        style={{
-                          fontSize: "10px",
-                          fontWeight: 800,
-                          padding: "2px 8px",
-                          borderRadius: "999px",
-                          background: "rgba(16, 185, 129, 0.12)",
-                          color: "#10b981",
-                          border: "1px solid rgba(16, 185, 129, 0.25)",
-                        }}
-                      >
-                        ● {userRole} Active
-                      </span>
-                    </div>
-                    <p style={{ fontSize: "11.5px", color: "var(--gd-muted)", margin: "3px 0 0 0" }}>
+                    <h2 style={{ fontSize: "15px", fontWeight: 900, color: "var(--gd-ink)", margin: 0 }}>
                       {lang === "id"
-                        ? `Ruang Kerja: ${companyProfile?.companyName || workspaceName} · Akun: ${userEmail || "Terautentikasi"}`
-                        : `Workspace: ${companyProfile?.companyName || workspaceName} · Account: ${userEmail || "Authenticated"}`}
-                    </p>
+                        ? `Selamat datang kembali, ${userLabel || userEmail?.split("@")[0] || "Owner"}!`
+                        : `Welcome back, ${userLabel || userEmail?.split("@")[0] || "Owner"}!`}
+                    </h2>
                   </div>
                 </div>
 

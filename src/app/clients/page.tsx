@@ -297,20 +297,6 @@ export default function ClientsPage() {
           >
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-
-          {user && (
-            <div
-              title={`Sesi aktif: ${user.email}`}
-              className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-full glass-modal border border-[var(--gd-rim)] shadow-sm text-xs"
-            >
-              <span className="w-5 h-5 rounded-full bg-[var(--gd-pick)] text-[var(--gd-pick-ink)] flex items-center justify-center font-black text-[10px] uppercase shadow-sm">
-                {(user.user_metadata?.full_name || user.email || "U")[0]}
-              </span>
-              <span className="font-bold text-[11px] text-[var(--gd-ink)] max-w-[110px] truncate">
-                {user.user_metadata?.full_name || user.email?.split("@")[0]}
-              </span>
-            </div>
-          )}
         </div>
       </header>
 
