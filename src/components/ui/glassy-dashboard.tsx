@@ -1752,22 +1752,7 @@ function AnalyticsView({ period, type, download, invoices, onViewInvoice, onEdit
             />
           </Panel>
         </div>
-        {trend ? (
-          <Panel title="Ekspor Laporan Keuangan" className="gd-statement">
-            <div className="gd-approval-content">
-              <span className="gd-list-icon">
-                <Clock3 aria-hidden="true" />
-              </span>
-              <div>
-                <strong>Laporan Tagihan FlowDesk (IDR)</strong>
-                <small>{invoices.length} tagihan aktif · Unduh format Excel (.xlsx)</small>
-              </div>
-              <button type="button" className="gd-icon-button" aria-label="Unduh Excel" onClick={download}>
-                <Download aria-hidden="true" />
-              </button>
-            </div>
-          </Panel>
-        ) : (
+        {!trend && (
           <InvoiceLedger
             invoices={invoices}
             onViewInvoice={onViewInvoice}
@@ -2900,9 +2885,11 @@ function GlassyDashboard({
                 {view !== "operations" && !invoices && <div className="gd-period" role="group" aria-label="Reporting period">
                   {periods.map(item => <button type="button" key={item} aria-pressed={item === period} onClick={() => setPeriod(item)}>{item}</button>)}
                 </div>}
-                {(view === "operations" || view === "trends" || invoices) && <button type="button" className="gd-primary gd-export" onClick={view === "operations" ? downloadWork : downloadReport}>
-                  <ArrowDownToLine aria-hidden="true" /> <span>{lang === "id" ? (invoices ? "Ekspor Excel" : "Ekspor CSV") : (invoices ? "Export Excel" : "Export CSV")}</span>
-                </button>}
+                {view === "command" && (
+                  <button type="button" className="gd-primary gd-export" onClick={downloadReport}>
+                    <ArrowDownToLine aria-hidden="true" /> <span>{lang === "id" ? "Ekspor Excel" : "Export Excel"}</span>
+                  </button>
+                )}
               </div>
             </header>
             <div className="gd-content" ref={content} key={view} data-view={view}>
