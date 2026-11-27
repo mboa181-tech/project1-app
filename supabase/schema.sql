@@ -29,12 +29,32 @@ create index if not exists idx_invoices_created_at on public.invoices(created_at
 -- 3. Row Level Security (RLS) Configuration
 alter table public.invoices enable row level security;
 
--- Demo policy: Allow read and write for the portfolio showcase
+-- Option A (Demo / Showcase Mode): Allow public read-write for portfolio preview
 create policy "Allow public read-write for showcase demo"
   on public.invoices
   for all
   using (true)
   with check (true);
+
+-- Option B (Hardened Enterprise Mode): Uncomment for strict production deployments
+-- 1. Anyone can view invoices (needed for public payment links /pay/[id])
+-- create policy "Allow public read for invoices"
+--   on public.invoices for select
+--   using (true);
+-- 2. Only authenticated staff can insert, update, or delete invoices
+-- create policy "Allow authenticated staff write"
+--   on public.invoices for insert
+--   to authenticated
+--   with check (true);
+-- create policy "Allow authenticated staff update"
+--   on public.invoices for update
+--   to authenticated
+--   using (true)
+--   with check (true);
+-- create policy "Allow authenticated staff delete"
+--   on public.invoices for delete
+--   to authenticated
+--   using (true);
 
 -- 4. Initial Seed Data (Realistic B2B Portfolio Data in IDR)
 insert into public.invoices (id, invoice_number, client_name, client_email, issue_date, due_date, status, subtotal, tax_rate, tax_amount, total, currency, notes, items)
