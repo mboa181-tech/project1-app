@@ -92,3 +92,8 @@ export function mapToDb(inv: Invoice) {
     items: inv.items,
   };
 }
+
+export function mapToDbWithoutUser(inv: Invoice) {
+  const { user_id, ...rest } = mapToDb(inv);
+  return rest;
+}

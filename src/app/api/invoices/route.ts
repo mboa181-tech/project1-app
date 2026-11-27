@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase, isSupabaseConfigured, mapFromDb, mapToDb } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured, mapFromDb, mapToDb, mapToDbWithoutUser } from "@/lib/supabase";
 import { initialInvoices } from "@/lib/mock-data";
 import { Invoice } from "@/lib/types";
 import {
@@ -75,25 +75,49 @@ export async function GET(req: NextRequest) {
           .eq("user_id", userId)
           .order("created_at", { ascending: false });
 
-        if (!error && data && data.length > 0) {
+        if (!error && data) {
+          if (data.length > 0) {
+            return NextResponse.json({
+              source: "supabase",
+              invoices: data.map(mapFromDb),
+            });
+          }
+
+          // If this user has 0 invoices, check if there are legacy default invoices
+          const { data: legacyData, error: legacyErr } = await supabase
+            .from("invoices")
+            .select("*")
+            .or("user_id.eq.default_user,user_id.is.null")
+            .order("created_at", { ascending: false });
+
+          if (!legacyErr && legacyData && legacyData.length > 0) {
+            return NextResponse.json({
+              source: "supabase-legacy",
+              invoices: legacyData.map(mapFromDb),
+            });
+          }
+
+          // Legitimate empty state for a new user with no invoices
           return NextResponse.json({
             source: "supabase",
-            invoices: data.map(mapFromDb),
+            invoices: [],
           });
         }
 
-        // Recovery: Check for legacy invoices created before user_id column
-        const { data: legacyData, error: legacyErr } = await supabase
-          .from("invoices")
-          .select("*")
-          .or("user_id.eq.default_user,user_id.is.null")
-          .order("created_at", { ascending: false });
+        // Schema fallback: if user_id column does not exist in this Supabase database
+        if (error && (error.message?.includes("user_id") || error.code === "42703")) {
+          console.warn("Supabase schema does not have user_id column yet. Fetching all rows...");
+          const { data: allData, error: allErr } = await supabase
+            .from("invoices")
+            .select("*")
+            .order("created_at", { ascending: false });
 
-        if (!legacyErr && legacyData && legacyData.length > 0) {
-          return NextResponse.json({
-            source: "supabase-legacy",
-            invoices: legacyData.map(mapFromDb),
-          });
+          if (!allErr && allData) {
+            return NextResponse.json({
+              source: "supabase",
+              invoices: allData.map(mapFromDb),
+            });
+          }
         }
       } catch (err) {
         console.error("Supabase user-isolated query exception:", err);
@@ -126,7 +150,8 @@ export async function GET(req: NextRequest) {
 
   // 3. Fallback: unauthenticated or no userId provided -> return empty array for privacy
   return NextResponse.json({
-    source: "local-persistent",
+    source: isSupabaseConfigured ? "supabase" : "local-persistent",
+    isSupabaseConfigured,
     invoices: [],
   });
 }
@@ -156,14 +181,49 @@ export async function POST(req: NextRequest) {
     const cleanInvoice = validation.invoice;
 
     if (isSupabaseConfigured && supabase) {
-      const { error } = await supabase
+      const dbPayload = mapToDb(cleanInvoice);
+      let { error } = await supabase
         .from("invoices")
-        .insert([mapToDb(cleanInvoice)]);
+        .insert([dbPayload]);
+
+      // Schema mismatch fallback: if user_id column does not exist in Supabase
+      if (error && (error.message?.includes("user_id") || error.code === "42703")) {
+        console.warn("Supabase table missing 'user_id' column. Retrying insert without user_id...");
+        const payloadWithoutUser = mapToDbWithoutUser(cleanInvoice);
+        const retry = await supabase
+          .from("invoices")
+          .insert([payloadWithoutUser]);
+        error = retry.error;
+      }
+
+      // Unique constraint fallback: if invoice_number collision occurs (code 23505)
+      if (
+        error &&
+        (error.code === "23505" ||
+          error.message?.includes("unique constraint") ||
+          error.message?.includes("invoice_number"))
+      ) {
+        console.warn("Supabase invoice_number collision. Retrying with randomized suffix...");
+        const altInvoiceNumber = `${cleanInvoice.invoiceNumber}-${Math.floor(10 + Math.random() * 90)}`;
+        cleanInvoice.invoiceNumber = altInvoiceNumber;
+        const altPayload = mapToDb(cleanInvoice);
+        let retry = await supabase.from("invoices").insert([altPayload]);
+        if (retry.error && (retry.error.message?.includes("user_id") || retry.error.code === "42703")) {
+          const altWithoutUser = mapToDbWithoutUser(cleanInvoice);
+          retry = await supabase.from("invoices").insert([altWithoutUser]);
+        }
+        error = retry.error;
+      }
 
       if (error) {
-        console.error("Supabase insert error (masked):", error.message);
+        console.error("Supabase insert error:", error);
         return NextResponse.json(
-          { error: "Gagal menyimpan data ke database server." },
+          {
+            error: error.message || "Gagal menyimpan data ke database server.",
+            code: error.code,
+            details: error.details,
+            hint: error.hint,
+          },
           { status: 500 }
         );
       }
@@ -216,9 +276,13 @@ export async function PATCH(req: NextRequest) {
         .eq("id", id);
 
       if (error) {
-        console.error("Supabase status update error (masked):", error.message);
+        console.error("Supabase status update error:", error);
         return NextResponse.json(
-          { error: "Gagal memperbarui status pada database." },
+          {
+            error: error.message || "Gagal memperbarui status pada database.",
+            code: error.code,
+            details: error.details,
+          },
           { status: 500 }
         );
       }
@@ -263,15 +327,31 @@ export async function PUT(req: NextRequest) {
     const updatedInvoice = validation.invoice;
 
     if (isSupabaseConfigured && supabase) {
-      const { error } = await supabase
+      const dbPayload = mapToDb(updatedInvoice);
+      let { error } = await supabase
         .from("invoices")
-        .update(mapToDb(updatedInvoice))
+        .update(dbPayload)
         .eq("id", updatedInvoice.id);
 
+      if (error && (error.message?.includes("user_id") || error.code === "42703")) {
+        console.warn("Supabase table missing 'user_id' column. Retrying update without user_id...");
+        const payloadWithoutUser = mapToDbWithoutUser(updatedInvoice);
+        const retry = await supabase
+          .from("invoices")
+          .update(payloadWithoutUser)
+          .eq("id", updatedInvoice.id);
+        error = retry.error;
+      }
+
       if (error) {
-        console.error("Supabase full update error (masked):", error.message);
+        console.error("Supabase full update error:", error);
         return NextResponse.json(
-          { error: "Gagal memperbarui faktur pada database." },
+          {
+            error: error.message || "Gagal memperbarui faktur pada database.",
+            code: error.code,
+            details: error.details,
+            hint: error.hint,
+          },
           { status: 500 }
         );
       }
@@ -317,9 +397,13 @@ export async function DELETE(req: NextRequest) {
     if (isSupabaseConfigured && supabase) {
       const { error } = await supabase.from("invoices").delete().eq("id", id);
       if (error) {
-        console.error("Supabase delete error (masked):", error.message);
+        console.error("Supabase delete error:", error);
         return NextResponse.json(
-          { error: "Gagal menghapus data dari database." },
+          {
+            error: error.message || "Gagal menghapus data dari database.",
+            code: error.code,
+            details: error.details,
+          },
           { status: 500 }
         );
       }

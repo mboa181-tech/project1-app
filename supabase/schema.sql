@@ -2,6 +2,12 @@
 -- FlowDesk Database Schema (PostgreSQL / Supabase)
 -- ==============================================================================
 
+-- ⚠️ MIGRATION HELPER: If your table was created previously without 'user_id',
+-- run this single command in Supabase SQL Editor:
+-- ALTER TABLE public.invoices ADD COLUMN IF NOT EXISTS user_id text NOT NULL DEFAULT 'default_user';
+-- CREATE INDEX IF NOT EXISTS idx_invoices_user_id ON public.invoices(user_id);
+-- CREATE POLICY "Allow public read-write for showcase demo" ON public.invoices FOR ALL USING (true) WITH CHECK (true);
+
 -- 1. Create Invoices Table (Multi-Tenant Architecture)
 create table if not exists public.invoices (
   id text primary key,

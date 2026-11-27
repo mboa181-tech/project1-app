@@ -182,13 +182,14 @@ export default function DashboardPage() {
         body: JSON.stringify(invoiceWithUser),
       });
       if (res.ok) {
-        showToast(`Tagihan ${invoiceWithUser.invoiceNumber} berhasil disimpan.`);
+        showToast(`Tagihan ${invoiceWithUser.invoiceNumber} berhasil disimpan ke database!`);
       } else {
         const errData = await res.json().catch(() => ({}));
         showToast(`Gagal menyimpan tagihan: ${errData.error || "Server error"}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("API error:", err);
+      showToast(`Gagal koneksi: ${err?.message || "Kesalahan jaringan"}`);
     }
   };
 
