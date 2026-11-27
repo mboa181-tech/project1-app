@@ -1508,7 +1508,7 @@ function AnalyticsView({ period, type, download, invoices, onViewInvoice, onEdit
               </span>
               <div>
                 <strong>Laporan Tagihan FlowDesk (IDR)</strong>
-                <small>{invoices.length} tagihan aktif · Unduh format CSV</small>
+                <small>{invoices.length} tagihan aktif · Unduh format Excel (.xls)</small>
               </div>
               <button type="button" className="gd-icon-button" aria-label="Unduh CSV" onClick={download}>
                 <Download aria-hidden="true" />
@@ -1732,6 +1732,85 @@ function routeFromHash(): View {
   if (typeof location === "undefined") return "command";
   const id = location.hash.slice(1);
   return routeOrder.find(view => view === id) ?? "command";
+}
+
+function saveExcel(filename: string, invoices: Invoice[]) {
+  const tableRows = invoices
+    .map(
+      (inv) => `
+    <tr>
+      <td style="mso-number-format:'\\@'; padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.invoiceNumber}</td>
+      <td style="padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.clientName}</td>
+      <td style="padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.clientEmail}</td>
+      <td style="text-align: center; mso-number-format:'yyyy\\-mm\\-dd'; padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.issueDate}</td>
+      <td style="text-align: center; mso-number-format:'yyyy\\-mm\\-dd'; padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.dueDate}</td>
+      <td style="text-align: center; font-weight: bold; padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 10pt; background-color: ${
+        inv.status === "PAID"
+          ? "#d1fae5; color: #065f46"
+          : inv.status === "PENDING"
+          ? "#fef3c7; color: #92400e"
+          : inv.status === "OVERDUE"
+          ? "#fee2e2; color: #991b1b"
+          : "#f3f4f6; color: #374151"
+      };">${inv.status}</td>
+      <td style="text-align: right; mso-number-format:'\\Rp\\ #\\,\\#\\#0'; padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.subtotal}</td>
+      <td style="text-align: right; mso-number-format:'\\Rp\\ #\\,\\#\\#0'; padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.taxAmount}</td>
+      <td style="text-align: right; font-weight: bold; mso-number-format:'\\Rp\\ #\\,\\#\\#0'; padding: 7px 12px; border: 1px solid #cbd5e1; font-family: Calibri, Arial, sans-serif; font-size: 11pt;">${inv.total}</td>
+    </tr>`
+    )
+    .join("");
+
+  const excelContent = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<!--[if gte mso 9]>
+<xml>
+  <x:ExcelWorkbook>
+    <x:ExcelWorksheets>
+      <x:ExcelWorksheet>
+        <x:Name>Laporan Tagihan</x:Name>
+        <x:WorksheetOptions>
+          <x:DisplayGridlines/>
+        </x:WorksheetOptions>
+      </x:ExcelWorksheet>
+    </x:ExcelWorksheets>
+  </x:ExcelWorkbook>
+</xml>
+<![endif]-->
+<meta http-equiv="content-type" content="application/vnd.ms-excel; charset=UTF-8"/>
+<style>
+  th { background-color: #0f766e; color: #ffffff; font-weight: bold; text-align: center; border: 1px solid #0d9488; height: 38px; font-family: Calibri, Arial, sans-serif; font-size: 11pt; }
+</style>
+</head>
+<body>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 150px;">No. Invoice</th>
+        <th style="width: 230px;">Klien</th>
+        <th style="width: 250px;">Email</th>
+        <th style="width: 130px;">Tgl Terbit</th>
+        <th style="width: 130px;">Jatuh Tempo</th>
+        <th style="width: 110px;">Status</th>
+        <th style="width: 170px;">Subtotal (IDR)</th>
+        <th style="width: 150px;">PPN 11% (IDR)</th>
+        <th style="width: 190px;">Total (IDR)</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${tableRows}
+    </tbody>
+  </table>
+</body>
+</html>`;
+
+  const blob = new Blob([excelContent], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename.endsWith(".xls") ? filename : `${filename}.xls`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function saveCsv(filename: string, rows: (string | number)[][]) {
@@ -2209,10 +2288,7 @@ function GlassyDashboard({
 
   const downloadReport = () => {
     if (invoices) {
-      saveCsv("flowdesk-invoices.csv", [
-        ["Invoice Number", "Client", "Email", "Issue Date", "Due Date", "Status", "Subtotal (IDR)", "Tax (IDR)", "Total (IDR)"],
-        ...invoices.map(i => [i.invoiceNumber, i.clientName, i.clientEmail, i.issueDate, i.dueDate, i.status, i.subtotal, i.taxAmount, i.total]),
-      ]);
+      saveExcel("flowdesk-laporan-tagihan.xls", invoices);
       return;
     }
     const stats = analytics[period];
@@ -2421,7 +2497,7 @@ function GlassyDashboard({
                   {periods.map(item => <button type="button" key={item} aria-pressed={item === period} onClick={() => setPeriod(item)}>{item}</button>)}
                 </div>}
                 {(view === "operations" || view === "trends" || invoices) && <button type="button" className="gd-primary gd-export" onClick={view === "operations" ? downloadWork : downloadReport}>
-                  <ArrowDownToLine aria-hidden="true" /> <span>{lang === "id" ? "Ekspor CSV" : "Export CSV"}</span>
+                  <ArrowDownToLine aria-hidden="true" /> <span>{lang === "id" ? (invoices ? "Ekspor Excel" : "Ekspor CSV") : (invoices ? "Export Excel" : "Export CSV")}</span>
                 </button>}
               </div>
             </header>
