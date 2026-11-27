@@ -2338,8 +2338,8 @@ function GlassyDashboard({
         <Dock active={active} side select={selectView} lang={lang} />
         <main className="gd-stage">
           <div className="gd-stage-scroll" ref={scrollArea}>
-            {/* Executive Welcome & Account Identity Banner */}
-            {invoices && (
+            {/* Executive Welcome & Account Identity Banner (Hanya di Dashboard Utama / Command Center) */}
+            {invoices && view === "command" && (
               <div
                 style={{
                   margin: "0 0 16px 0",
