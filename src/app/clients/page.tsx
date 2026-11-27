@@ -80,11 +80,37 @@ export default function ClientsPage() {
   useEffect(() => {
     if (!user) return;
     async function fetchInvoices() {
+      // 1. Try user-partitioned local storage first
+      try {
+        const local = localStorage.getItem(invoiceStorageKey);
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setInvoices(parsed);
+          }
+        }
+      } catch {}
+
+      // 2. Recovery: check legacy local storage 'flowdesk_invoices_v1'
+      try {
+        const legacyLocal = localStorage.getItem("flowdesk_invoices_v1");
+        if (legacyLocal) {
+          const parsed = JSON.parse(legacyLocal);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setInvoices(parsed);
+            try {
+              localStorage.setItem(invoiceStorageKey, JSON.stringify(parsed));
+            } catch {}
+          }
+        }
+      } catch {}
+
+      // 3. Fetch from API (handles Supabase & local persistent store)
       try {
         const res = await fetch(`/api/invoices?userId=${encodeURIComponent(userKey)}`);
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.invoices)) {
+          if (Array.isArray(data.invoices) && data.invoices.length > 0) {
             setInvoices(data.invoices);
             try {
               localStorage.setItem(invoiceStorageKey, JSON.stringify(data.invoices));
@@ -94,20 +120,15 @@ export default function ClientsPage() {
         }
       } catch (e) {}
 
-      try {
-        const local = localStorage.getItem(invoiceStorageKey);
-        if (local) {
-          setInvoices(JSON.parse(local));
-          return;
-        }
-      } catch {}
-
-      if (userKey === "usr_demo" || user?.email?.includes("demo") || user?.email === "admin@flowdesk.app") {
-        const demoData = initialInvoices.map((inv) => ({ ...inv, userId: userKey }));
-        setInvoices(demoData);
-      } else {
-        setInvoices([]);
-      }
+      // 4. Fallback starter data if empty so user is NEVER stranded with a blank screen
+      setInvoices((prev) => {
+        if (prev.length > 0) return prev;
+        const starter = initialInvoices.map((inv) => ({ ...inv, userId: userKey }));
+        try {
+          localStorage.setItem(invoiceStorageKey, JSON.stringify(starter));
+        } catch {}
+        return starter;
+      });
     }
     fetchInvoices();
   }, [userKey]);
@@ -276,6 +297,20 @@ export default function ClientsPage() {
           >
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
+
+          {user && (
+            <div
+              title={`Sesi aktif: ${user.email}`}
+              className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-full glass-modal border border-[var(--gd-rim)] shadow-sm text-xs"
+            >
+              <span className="w-5 h-5 rounded-full bg-[var(--gd-pick)] text-[var(--gd-pick-ink)] flex items-center justify-center font-black text-[10px] uppercase shadow-sm">
+                {(user.user_metadata?.full_name || user.email || "U")[0]}
+              </span>
+              <span className="font-bold text-[11px] text-[var(--gd-ink)] max-w-[110px] truncate">
+                {user.user_metadata?.full_name || user.email?.split("@")[0]}
+              </span>
+            </div>
+          )}
         </div>
       </header>
 

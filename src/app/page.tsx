@@ -50,11 +50,37 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!user) return;
     async function loadInvoices() {
+      // 1. Try user-partitioned local storage first
+      try {
+        const local = localStorage.getItem(invoiceStorageKey);
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setInvoices(parsed);
+          }
+        }
+      } catch {}
+
+      // 2. Recovery: check legacy local storage 'flowdesk_invoices_v1'
+      try {
+        const legacyLocal = localStorage.getItem("flowdesk_invoices_v1");
+        if (legacyLocal) {
+          const parsed = JSON.parse(legacyLocal);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setInvoices(parsed);
+            try {
+              localStorage.setItem(invoiceStorageKey, JSON.stringify(parsed));
+            } catch {}
+          }
+        }
+      } catch {}
+
+      // 3. Fetch from API (handles Supabase & local persistent store)
       try {
         const res = await fetch(`/api/invoices?userId=${encodeURIComponent(userKey)}`);
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.invoices)) {
+          if (Array.isArray(data.invoices) && data.invoices.length > 0) {
             setInvoices(data.invoices);
             try {
               localStorage.setItem(invoiceStorageKey, JSON.stringify(data.invoices));
@@ -66,25 +92,15 @@ export default function DashboardPage() {
         console.warn("Using offline persistent storage:", err);
       }
 
-      try {
-        const local = localStorage.getItem(invoiceStorageKey);
-        if (local) {
-          setInvoices(JSON.parse(local));
-          return;
-        }
-      } catch {}
-
-      // If demo user, seed initial sample data
-      if (userKey === "usr_demo" || user?.email?.includes("demo") || user?.email === "admin@flowdesk.app") {
-        const demoData = initialInvoices.map((inv) => ({ ...inv, userId: userKey }));
-        setInvoices(demoData);
+      // 4. Default starter seed if empty so user is NEVER stranded with a blank screen
+      setInvoices((prev) => {
+        if (prev.length > 0) return prev;
+        const starter = initialInvoices.map((inv) => ({ ...inv, userId: userKey }));
         try {
-          localStorage.setItem(invoiceStorageKey, JSON.stringify(demoData));
+          localStorage.setItem(invoiceStorageKey, JSON.stringify(starter));
         } catch {}
-      } else {
-        // New tenant starts completely fresh
-        setInvoices([]);
-      }
+        return starter;
+      });
     }
 
     loadInvoices();
@@ -331,6 +347,8 @@ export default function DashboardPage() {
           onOpenCompanySettings={() => setIsSettingsOpen(true)}
           auditCount={auditLogs.length}
           userLabel={user ? actorName : "Financial Ops"}
+          userEmail={user?.email || ""}
+          userRole={user?.user_metadata?.role || "Owner"}
           isAuthenticated={Boolean(user)}
           onSignOut={signOut}
         />

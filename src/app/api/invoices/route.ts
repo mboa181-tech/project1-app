@@ -75,10 +75,24 @@ export async function GET(req: NextRequest) {
           .eq("user_id", userId)
           .order("created_at", { ascending: false });
 
-        if (!error && data) {
+        if (!error && data && data.length > 0) {
           return NextResponse.json({
             source: "supabase",
             invoices: data.map(mapFromDb),
+          });
+        }
+
+        // Recovery: Check for legacy invoices created before user_id column
+        const { data: legacyData, error: legacyErr } = await supabase
+          .from("invoices")
+          .select("*")
+          .or("user_id.eq.default_user,user_id.is.null")
+          .order("created_at", { ascending: false });
+
+        if (!legacyErr && legacyData && legacyData.length > 0) {
+          return NextResponse.json({
+            source: "supabase-legacy",
+            invoices: legacyData.map(mapFromDb),
           });
         }
       } catch (err) {
@@ -87,12 +101,26 @@ export async function GET(req: NextRequest) {
     }
 
     const userInvoices = localInvoicesStore.filter(
-      (inv) => (inv.userId || "usr_demo") === userId
+      (inv) => inv.userId === userId
     );
+
+    if (userInvoices.length > 0) {
+      return NextResponse.json({
+        source: "local-persistent",
+        invoices: userInvoices,
+      });
+    }
+
+    // Fallback: check legacy in-memory data so user is never left with an empty screen
+    const legacyLocal = localInvoicesStore.filter(
+      (inv) => !inv.userId || inv.userId === "usr_demo" || inv.userId === "default_user"
+    );
+
+    const fallbackInvoices = legacyLocal.length > 0 ? legacyLocal : initialInvoices.map((inv) => ({ ...inv, userId }));
 
     return NextResponse.json({
       source: "local-persistent",
-      invoices: userInvoices,
+      invoices: fallbackInvoices,
     });
   }
 

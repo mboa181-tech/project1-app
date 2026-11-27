@@ -41,6 +41,8 @@ export interface GlassyDashboardProps {
   onOpenCompanySettings?: () => void;
   auditCount?: number;
   userLabel?: string;
+  userEmail?: string;
+  userRole?: string;
   isAuthenticated?: boolean;
   onSignOut?: () => void;
 }
@@ -2096,6 +2098,8 @@ function GlassyDashboard({
   onOpenCompanySettings,
   auditCount = 0,
   userLabel,
+  userEmail,
+  userRole = "Owner",
   isAuthenticated,
   onSignOut,
 }: GlassyDashboardProps = {}) {
@@ -2318,9 +2322,51 @@ function GlassyDashboard({
           </button>
           {invoices && (
             isAuthenticated ? (
-              <button type="button" className="gd-icon-button" title="Keluar (Sign Out)" aria-label="Keluar" onClick={onSignOut}>
-                <LogOut aria-hidden="true" />
-              </button>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                <div
+                  title={`Sesi aktif: ${userEmail || userLabel || "Pengguna"}`}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "3px 10px 3px 6px",
+                    borderRadius: "999px",
+                    background: "var(--gd-card)",
+                    border: "1px solid var(--gd-rim)",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      borderRadius: "999px",
+                      background: "var(--gd-pick)",
+                      color: "var(--gd-pick-ink)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "11px",
+                      fontWeight: 900,
+                      textTransform: "uppercase",
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+                    }}
+                  >
+                    {(userLabel || userEmail || "U")[0]}
+                  </span>
+                  <div style={{ display: "flex", flexDirection: "column", textAlign: "left", lineHeight: 1.1 }}>
+                    <strong style={{ fontSize: "11px", fontWeight: 800, color: "var(--gd-ink)", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {userLabel || userEmail?.split("@")[0] || "Owner"}
+                    </strong>
+                    <small style={{ fontSize: "9px", color: "var(--gd-muted)", fontWeight: 600 }}>
+                      {userRole}
+                    </small>
+                  </div>
+                </div>
+                <button type="button" className="gd-icon-button" title="Keluar (Sign Out)" aria-label="Keluar" onClick={onSignOut}>
+                  <LogOut aria-hidden="true" />
+                </button>
+              </div>
             ) : (
               <Link href="/login" className="gd-icon-button" title={lang === "id" ? "Masuk ke Akun" : "Sign In"} aria-label="Masuk">
                 <LogIn aria-hidden="true" />
@@ -2334,6 +2380,97 @@ function GlassyDashboard({
         <Dock active={active} side select={selectView} lang={lang} />
         <main className="gd-stage">
           <div className="gd-stage-scroll" ref={scrollArea}>
+            {/* Executive Welcome & Account Identity Banner */}
+            {invoices && (
+              <div
+                style={{
+                  margin: "0 0 16px 0",
+                  padding: "14px 18px",
+                  borderRadius: "20px",
+                  background: "var(--gd-card)",
+                  border: "1px solid var(--gd-rim)",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "12px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div
+                    style={{
+                      width: "38px",
+                      height: "38px",
+                      borderRadius: "14px",
+                      background: "linear-gradient(135deg, var(--gd-pick) 0%, var(--gd-teal) 100%)",
+                      color: "var(--gd-pick-ink)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "16px",
+                      fontWeight: 900,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                    }}
+                  >
+                    {(userLabel || userEmail || "U")[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      <h2 style={{ fontSize: "15px", fontWeight: 900, color: "var(--gd-ink)", margin: 0 }}>
+                        {lang === "id"
+                          ? `Selamat datang kembali, ${userLabel || userEmail?.split("@")[0] || "Owner"}!`
+                          : `Welcome back, ${userLabel || userEmail?.split("@")[0] || "Owner"}!`}
+                      </h2>
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 800,
+                          padding: "2px 8px",
+                          borderRadius: "999px",
+                          background: "rgba(16, 185, 129, 0.12)",
+                          color: "#10b981",
+                          border: "1px solid rgba(16, 185, 129, 0.25)",
+                        }}
+                      >
+                        ● {userRole} Active
+                      </span>
+                    </div>
+                    <p style={{ fontSize: "11.5px", color: "var(--gd-muted)", margin: "3px 0 0 0" }}>
+                      {lang === "id"
+                        ? `Ruang Kerja: ${companyProfile?.companyName || workspaceName} · Akun: ${userEmail || "Terautentikasi"}`
+                        : `Workspace: ${companyProfile?.companyName || workspaceName} · Account: ${userEmail || "Authenticated"}`}
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  {onCreateInvoice && (
+                    <button
+                      type="button"
+                      onClick={onCreateInvoice}
+                      className="gd-primary"
+                      style={{ fontSize: "12px", minBlockSize: "32px", padding: "0 12px" }}
+                    >
+                      <Plus aria-hidden="true" style={{ width: 14, height: 14 }} />
+                      <span>{lang === "id" ? "Buat Tagihan" : "New Invoice"}</span>
+                    </button>
+                  )}
+                  {onOpenCompanySettings && (
+                    <button
+                      type="button"
+                      onClick={onOpenCompanySettings}
+                      className="gd-secondary"
+                      style={{ fontSize: "12px", minBlockSize: "32px", padding: "0 10px" }}
+                    >
+                      <Building2 aria-hidden="true" style={{ width: 14, height: 14 }} />
+                      <span>{lang === "id" ? "Profil PT" : "Profile"}</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             <header className="gd-view-head">
               <div>
                 <h1>{current.label}</h1>
