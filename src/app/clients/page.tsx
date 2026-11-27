@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Invoice, DemoUser } from "@/lib/types";
 import { initialInvoices, initialDemoUsers } from "@/lib/mock-data";
 import { InvoiceModal } from "@/components/InvoiceModal";
@@ -46,8 +47,9 @@ const studioPhoto =
   "https://cdn.21st.dev/assets/mirror/ea/ea9270b3b7246283219ac52fa77a1213e9d1efb285d76348d3620609ba6cefa7.jpg";
 
 export default function ClientsPage() {
+  const router = useRouter();
   const { t, lang, toggleLang } = useLanguage();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [isDark, setIsDark] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -56,6 +58,13 @@ export default function ClientsPage() {
   const [selectedClientForHistory, setSelectedClientForHistory] = useState<ClientRecord | null>(null);
   const [selectedInvoiceForDetail, setSelectedInvoiceForDetail] = useState<Invoice | null>(null);
   const [defaultClientForInvoice, setDefaultClientForInvoice] = useState<{ name: string; email: string } | null>(null);
+
+  // Auth Guard: Redirect unauthenticated visitors to login
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [loading, user, router]);
 
   useEffect(() => {
     if (isDark) {
@@ -66,6 +75,7 @@ export default function ClientsPage() {
   }, [isDark]);
 
   useEffect(() => {
+    if (!user) return;
     async function fetchInvoices() {
       try {
         const res = await fetch("/api/invoices");
@@ -149,6 +159,19 @@ export default function ClientsPage() {
   const totalClients = Object.keys(clientsMap).length;
   const totalBilledAll = Object.values(clientsMap).reduce((s, c) => s + c.totalBilled, 0);
   const avgLtv = totalClients > 0 ? Math.round(totalBilledAll / totalClients) : 0;
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#090d16] text-white font-['Manrope_Variable',Manrope,sans-serif]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-[var(--gd-teal)] border-t-transparent animate-spin" />
+          <span className="text-xs font-semibold tracking-wide text-slate-400">
+            {lang === "id" ? "Memverifikasi sesi aman..." : "Verifying secure session..."}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen text-[var(--gd-ink)] flex flex-col justify-between selection:bg-[var(--gd-focus)] selection:text-white font-['Manrope_Variable',Manrope,sans-serif]">

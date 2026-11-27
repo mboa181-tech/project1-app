@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Invoice } from "@/lib/types";
 import { initialInvoices, initialDemoUsers } from "@/lib/mock-data";
 import { GlassyDashboard } from "@/components/ui/glassy-dashboard";
@@ -13,8 +14,9 @@ import { useAuth } from "@/context/AuthContext";
 import { Check } from "lucide-react";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { lang } = useLanguage();
-  const { user, signOut } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>(initialInvoices);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
@@ -31,7 +33,15 @@ export default function DashboardPage() {
     document.documentElement.classList.add("dark");
   }, []);
 
+  // Auth Guard: Redirect unauthenticated visitors to login
   useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [loading, user, router]);
+
+  useEffect(() => {
+    if (!user) return;
     async function loadInvoices() {
       try {
         const res = await fetch("/api/invoices");
@@ -214,6 +224,19 @@ export default function DashboardPage() {
       showToast("Semua tagihan sudah lunas! Buat tagihan baru untuk simulasi webhook.");
     }
   };
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#090d16] text-white font-['Manrope_Variable',Manrope,sans-serif]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-[var(--gd-teal)] border-t-transparent animate-spin" />
+          <span className="text-xs font-semibold tracking-wide text-slate-400">
+            {lang === "id" ? "Memverifikasi sesi aman..." : "Verifying secure session..."}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen">

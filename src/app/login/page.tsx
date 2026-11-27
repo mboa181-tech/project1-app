@@ -3,8 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   FileText,
   Mail,
@@ -25,6 +25,7 @@ const studioPhoto =
 export default function LoginPage() {
   const router = useRouter();
   const { t, lang, toggleLang } = useLanguage();
+  const { user, signInWithCredentials } = useAuth();
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [fullName, setFullName] = useState("");
@@ -35,52 +36,31 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    if (user) {
+      router.push("/");
+    }
+  }, [user, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    if (!isSupabaseConfigured || !supabase) {
-      setErrorMsg(
-        lang === "id"
-          ? "Layanan autentikasi cloud sedang dalam mode pratinjau lokal."
-          : "Cloud authentication service is currently in local preview mode."
-      );
-      return;
-    }
-
     setLoading(true);
     try {
-      if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        });
-        if (error) {
-          setErrorMsg(error.message);
-        } else {
-          router.push("/");
-          router.refresh();
-        }
+      const res = await signInWithCredentials({
+        email: email.trim(),
+        password,
+        fullName: fullName.trim(),
+        mode,
+      });
+
+      if (res.error) {
+        setErrorMsg(res.error);
       } else {
-        const { data, error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-          options: {
-            data: {
-              full_name: fullName.trim() || email.split("@")[0],
-            },
-          },
-        });
-        if (error) {
-          setErrorMsg(error.message);
-        } else if (data.session) {
-          router.push("/");
-          router.refresh();
-        } else {
-          setSuccessMsg(t("authSignUpSuccess"));
-          setMode("signin");
-        }
+        router.push("/");
+        router.refresh();
       }
     } catch (err: any) {
       setErrorMsg(err?.message || "Authentication error");
