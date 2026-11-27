@@ -5,8 +5,9 @@ import Link from "next/link";
 import { Invoice } from "@/lib/types";
 import { formatRupiah } from "@/lib/format-currency";
 import { openWhatsAppInvoice } from "@/lib/whatsapp";
+import { useCompany } from "@/context/CompanyContext";
 
-import { ArrowDownRight, ArrowRight, ArrowUpRight, Box, CircleDollarSign, Clock3, Download, Ellipsis, Eye, Filter, ListChecks, Search, ShieldCheck, ShoppingBag, TriangleAlert, Users, Zap, ArrowDownToLine, BarChart3, Bell, BriefcaseBusiness, ChevronRight, Command, LayoutDashboard, Moon, Sun, TrendingUp, X, Plus, Pencil, Trash2, History, LogIn, LogOut, FileText, Globe, MessageCircle } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, Box, CircleDollarSign, Clock3, Download, Ellipsis, Eye, Filter, ListChecks, Search, ShieldCheck, ShoppingBag, TriangleAlert, Users, Zap, ArrowDownToLine, BarChart3, Bell, BriefcaseBusiness, ChevronRight, Command, LayoutDashboard, Moon, Sun, TrendingUp, X, Plus, Pencil, Trash2, History, LogIn, LogOut, FileText, Globe, MessageCircle, Building2 } from "lucide-react";
 
 import { useGSAP } from "@gsap/react";
 
@@ -37,6 +38,7 @@ export interface GlassyDashboardProps {
   onDeleteInvoice?: (invoiceId: string) => void;
   onSimulateWebhook?: () => void;
   onOpenAuditLog?: () => void;
+  onOpenCompanySettings?: () => void;
   auditCount?: number;
   userLabel?: string;
   isAuthenticated?: boolean;
@@ -1815,6 +1817,7 @@ function QuickActions({
   onViewInvoice,
   onCreateInvoice,
   onOpenAuditLog,
+  onOpenCompanySettings,
   onSimulateWebhook,
   toggleLang,
   theme,
@@ -1829,6 +1832,7 @@ function QuickActions({
   onViewInvoice?: (inv: Invoice) => void;
   onCreateInvoice?: () => void;
   onOpenAuditLog?: () => void;
+  onOpenCompanySettings?: () => void;
   onSimulateWebhook?: () => void;
   toggleLang?: () => void;
   theme?: "light" | "dark";
@@ -1880,6 +1884,14 @@ function QuickActions({
       keywords: "ekspor export download csv unduh excel laporan rekap",
     },
     {
+      id: "action-company-settings",
+      label: lang === "id" ? "Pengaturan Profil Perusahaan / Toko" : "Company & Bank Settings",
+      description: lang === "id" ? "Kustomisasi nama PT, alamat kantor, dan rekening bank pada nota" : "Customize business name, address, and remittance bank",
+      icon: Building2,
+      action: () => { close(); onOpenCompanySettings?.(); },
+      keywords: "pengaturan profil perusahaan toko pt rekening bank setting company profile alamat nota",
+    },
+    {
       id: "action-audit",
       label: lang === "id" ? "Log Audit & Jejak Aktivitas" : "Audit Log & Activity History",
       description: lang === "id" ? "Lihat riwayat pembuatan tagihan dan aktivitas akun" : "View invoice creation and account activity logs",
@@ -1913,7 +1925,7 @@ function QuickActions({
       action: () => { close(); setTheme?.(theme === "light" ? "dark" : "light"); },
       keywords: "tema theme gelap terang dark light mode warna",
     },
-  ], [lang, theme, onCreateInvoice, onOpenAuditLog, onSimulateWebhook, toggleLang, setTheme, downloadReport, close]);
+  ], [lang, theme, onCreateInvoice, onOpenAuditLog, onOpenCompanySettings, onSimulateWebhook, toggleLang, setTheme, downloadReport, close]);
 
   const matchingActions = useMemo(() => {
     if (terms.length === 0) return allActions.slice(0, 4);
@@ -2081,11 +2093,13 @@ function GlassyDashboard({
   onDeleteInvoice,
   onSimulateWebhook,
   onOpenAuditLog,
+  onOpenCompanySettings,
   auditCount = 0,
   userLabel,
   isAuthenticated,
   onSignOut,
 }: GlassyDashboardProps = {}) {
+  const { companyProfile } = useCompany();
   const [view, setView] = useState<View>(routeFromHash);
   const [active, setActive] = useState(view);
   const [period, setPeriod] = useState<Period>("30 days");
@@ -2218,7 +2232,11 @@ function GlassyDashboard({
     <div className="gd-surround">
       <header className="gd-top">
         <div className="gd-brand"><span className="gd-logo" aria-hidden="true"><svg viewBox="0 0 28 28" fill="none"><path d="m5 22 7.4-16h3.2L23 22h-4l-5-11.4L9 22H5Z" fill="currentColor"/><path d="M10 18h8l1.4 3h-10.8l1.4-3Z" fill="currentColor"/></svg></span>
-          <div><strong>{workspaceName}</strong><small>{invoices ? (userLabel || "Financial Ops") : "Workspace"}</small></div></div>
+          <div>
+            <strong>{companyProfile?.companyName ? companyProfile.companyName : workspaceName}</strong>
+            <small>{companyProfile?.tagline ? companyProfile.tagline : (invoices ? (userLabel || "Financial Ops") : "Workspace")}</small>
+          </div>
+        </div>
         <button
           type="button"
           className="gd-ask"
@@ -2279,6 +2297,17 @@ function GlassyDashboard({
             <Link href="/clients" className="gd-icon-button" title="CRM Klien" aria-label="CRM Klien">
               <Users aria-hidden="true" />
             </Link>
+          )}
+          {onOpenCompanySettings && (
+            <button
+              type="button"
+              className="gd-icon-button"
+              title={lang === "id" ? "Profil Perusahaan & Rekening (Pengaturan)" : "Company & Bank Settings"}
+              aria-label="Pengaturan Perusahaan"
+              onClick={onOpenCompanySettings}
+            >
+              <Building2 aria-hidden="true" />
+            </button>
           )}
           <button title={theme === "light" ? "Switch to dark theme" : "Switch to light theme"} type="button" className="gd-icon-button"
             aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"} onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
@@ -2385,6 +2414,7 @@ function GlassyDashboard({
         onViewInvoice={onViewInvoice}
         onCreateInvoice={onCreateInvoice}
         onOpenAuditLog={onOpenAuditLog}
+        onOpenCompanySettings={onOpenCompanySettings}
         onSimulateWebhook={onSimulateWebhook}
         toggleLang={toggleLang}
         theme={theme}

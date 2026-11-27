@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Invoice } from "@/lib/types";
 import { initialInvoices } from "@/lib/mock-data";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCompany } from "@/context/CompanyContext";
 import { formatRupiah, terbilangRupiah } from "@/lib/format-currency";
 import {
   CreditCard,
@@ -35,6 +36,7 @@ export default function PublicPaymentPage() {
   const router = useRouter();
   const invoiceId = params?.id as string;
   const { t, lang, toggleLang } = useLanguage();
+  const { companyProfile } = useCompany();
 
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
@@ -275,7 +277,7 @@ export default function PublicPaymentPage() {
                   {formatRupiah(invoice.total)}
                 </div>
                 <p className="text-[11px] font-semibold text-[var(--gd-teal)] mt-1">
-                  Dibayarkan ke FlowDesk Inc.
+                  Dibayarkan ke {companyProfile.companyName}
                 </p>
               </div>
 
@@ -413,7 +415,7 @@ export default function PublicPaymentPage() {
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--gd-muted)]">
                   {t("payInvoiceFrom")}
                 </span>
-                <h3 className="text-xl font-black text-[var(--gd-ink)] mt-0.5">FlowDesk Inc.</h3>
+                <h3 className="text-xl font-black text-[var(--gd-ink)] mt-0.5">{companyProfile.companyName}</h3>
                 <p className="text-xs text-[var(--gd-muted)]">Ref: #{invoice.invoiceNumber}</p>
               </div>
 
@@ -694,11 +696,11 @@ export default function PublicPaymentPage() {
         <div className="flex justify-between items-start pb-4 border-b-2 border-slate-900">
           <div>
             <h1 className="text-xl font-black text-slate-950 tracking-tight leading-none mb-1">
-              FlowDesk Inc.
+              {companyProfile.companyName}
             </h1>
             <p className="text-[11px] text-slate-600 leading-relaxed">
-              Jl. Sudirman No. 100, Suite 400, Jakarta Selatan 12190<br />
-              Email: billing@flowdesk.app • Website: https://flowdesk.app
+              {companyProfile.address}<br />
+              Email: {companyProfile.billingEmail} • Website: {companyProfile.website}
             </p>
           </div>
 
@@ -815,9 +817,9 @@ export default function PublicPaymentPage() {
             </span>
             <div>
               <strong className="block text-slate-900 text-xs font-bold">
-                FlowDesk Finance Operations
+                {companyProfile.signatoryName}
               </strong>
-              <span className="text-[10px] text-slate-500">FlowDesk Inc.</span>
+              <span className="text-[10px] text-slate-500">{companyProfile.companyName}</span>
             </div>
           </div>
         </div>

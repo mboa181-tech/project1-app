@@ -6,6 +6,7 @@ import { initialInvoices, initialDemoUsers } from "@/lib/mock-data";
 import { GlassyDashboard } from "@/components/ui/glassy-dashboard";
 import { InvoiceModal } from "@/components/InvoiceModal";
 import { InvoiceDetailModal } from "@/components/InvoiceDetailModal";
+import { CompanySettingsModal } from "@/components/CompanySettingsModal";
 import { AuditLogDrawer, AuditEntry } from "@/components/AuditLogDrawer";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
@@ -19,6 +20,7 @@ export default function DashboardPage() {
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isAuditOpen, setIsAuditOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [auditLogs, setAuditLogs] = useState<AuditEntry[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -238,6 +240,7 @@ export default function DashboardPage() {
           onDeleteInvoice={handleDeleteInvoice}
           onSimulateWebhook={handleSimulateWebhook}
           onOpenAuditLog={() => setIsAuditOpen(true)}
+          onOpenCompanySettings={() => setIsSettingsOpen(true)}
           auditCount={auditLogs.length}
           userLabel={user ? actorName : "Financial Ops"}
           isAuthenticated={Boolean(user)}
@@ -264,6 +267,12 @@ export default function DashboardPage() {
           setEditingInvoice(inv);
           setIsCreateOpen(true);
         }}
+      />
+
+      <CompanySettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onSavedToast={showToast}
       />
 
       <AuditLogDrawer

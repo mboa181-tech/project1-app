@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Invoice } from "@/lib/types";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCompany } from "@/context/CompanyContext";
 import { formatRupiah, terbilangRupiah } from "@/lib/format-currency";
 import { openWhatsAppInvoice } from "@/lib/whatsapp";
 import {
@@ -33,6 +34,7 @@ export function InvoiceDetailModal({
   onEdit,
 }: InvoiceDetailModalProps) {
   const { t, lang } = useLanguage();
+  const { companyProfile } = useCompany();
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -190,11 +192,12 @@ export function InvoiceDetailModal({
           <div className="flex justify-between items-start border-b-2 border-[var(--gd-line)] print:border-slate-800 pb-5">
             <div>
               <h1 className="text-xl font-black text-[var(--gd-ink)] print:text-slate-950 tracking-tight leading-none mb-1.5">
-                FlowDesk Inc.
+                {companyProfile.companyName}
               </h1>
               <p className="text-[11px] text-[var(--gd-muted)] print:text-slate-600 leading-relaxed">
-                Jl. Sudirman No. 100, Suite 400, Jakarta Selatan 12190<br />
-                Email: billing@flowdesk.app • https://flowdesk.app
+                {companyProfile.address}<br />
+                Email: {companyProfile.billingEmail} • {companyProfile.website}
+                {companyProfile.taxId && <span> • {companyProfile.taxId}</span>}
               </p>
             </div>
 
@@ -297,8 +300,8 @@ export function InvoiceDetailModal({
                   <CreditCard className="w-3.5 h-3.5 text-[var(--gd-teal)] print:text-slate-700" /> {t("detailRemittance")}
                 </span>
                 <p className="text-[var(--gd-muted)] print:text-slate-600 leading-relaxed">
-                  Bank: <strong>BCA / Mandiri</strong> • No. Rekening: <strong>1234-567-890</strong><br />
-                  Atas Nama: <strong>PT FlowDesk Solusi Nusantara</strong><br />
+                  Bank: <strong>{companyProfile.bankName}</strong> • No. Rekening: <strong>{companyProfile.bankAccountNumber}</strong><br />
+                  Atas Nama: <strong>{companyProfile.bankAccountHolder}</strong><br />
                   {invoice.notes || "Harap cantumkan nomor faktur saat melakukan transfer."}
                 </p>
               </div>
@@ -328,7 +331,7 @@ export function InvoiceDetailModal({
           <div className="pt-6 border-t border-[var(--gd-line)] print:border-slate-200 flex justify-between items-end text-xs">
             <span className="text-[10px] text-[var(--gd-muted)] print:text-slate-500 flex items-center gap-1.5">
               <Lock className="w-3 h-3 text-[var(--gd-teal)] print:text-slate-600" />
-              Dokumen ini diterbitkan secara elektronik oleh FlowDesk.
+              Dokumen ini diterbitkan secara elektronik oleh {companyProfile.companyName}.
             </span>
 
             <div className="text-right space-y-6">
@@ -337,10 +340,10 @@ export function InvoiceDetailModal({
               </span>
               <div>
                 <strong className="block text-[var(--gd-ink)] print:text-slate-900 text-xs font-bold">
-                  FlowDesk Finance
+                  {companyProfile.signatoryName}
                 </strong>
                 <span className="text-[10px] text-[var(--gd-muted)] print:text-slate-500">
-                  FlowDesk Inc.
+                  {companyProfile.companyName}
                 </span>
               </div>
             </div>

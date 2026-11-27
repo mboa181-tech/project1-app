@@ -35,13 +35,32 @@ function getStatusLabel(status: Invoice["status"], lang: "id" | "en" = "id"): st
 }
 
 /**
+ * Get dynamic company name from parameter or localStorage
+ */
+function getCompanyName(customName?: string): string {
+  if (customName && customName.trim()) return customName.trim();
+  if (typeof window !== "undefined") {
+    try {
+      const saved = localStorage.getItem("flowdesk_company_profile_v1");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.companyName) return parsed.companyName;
+      }
+    } catch {}
+  }
+  return "FlowDesk";
+}
+
+/**
  * Generate formatted WhatsApp message text for an invoice billing reminder
  */
 export function generateWhatsAppInvoiceMessage(
   invoice: Invoice,
   origin?: string,
-  lang: "id" | "en" = "id"
+  lang: "id" | "en" = "id",
+  customCompanyName?: string
 ): string {
+  const companyName = getCompanyName(customCompanyName);
   const base =
     origin ||
     (typeof window !== "undefined" && window.location.origin
@@ -54,7 +73,7 @@ export function generateWhatsAppInvoiceMessage(
 
   if (lang === "en") {
     return [
-      `*INVOICE BILLING — FLOWDESK*`,
+      `*INVOICE BILLING — ${companyName.toUpperCase()}*`,
       `Dear *${invoice.clientName}*,`,
       ``,
       `Here is the billing statement for your invoice:`,
@@ -69,12 +88,12 @@ export function generateWhatsAppInvoiceMessage(
       `🔗 ${payUrl}`,
       ``,
       `Thank you for your business.`,
-      `_FlowDesk Financial Operations_`,
+      `_${companyName} Financial Operations_`,
     ].join("\n");
   }
 
   return [
-    `*FAKTUR TAGIHAN — FLOWDESK*`,
+    `*FAKTUR TAGIHAN — ${companyName.toUpperCase()}*`,
     `Kepada Yth. *${invoice.clientName}*,`,
     ``,
     `Berikut rincian faktur tagihan Anda:`,
@@ -89,7 +108,7 @@ export function generateWhatsAppInvoiceMessage(
     `🔗 ${payUrl}`,
     ``,
     `Terima kasih atas kerja samanya.`,
-    `_FlowDesk Financial Operations_`,
+    `_${companyName} Financial Operations_`,
   ].join("\n");
 }
 
@@ -99,8 +118,10 @@ export function generateWhatsAppInvoiceMessage(
 export function generateWhatsAppReceiptMessage(
   invoice: Invoice,
   origin?: string,
-  lang: "id" | "en" = "id"
+  lang: "id" | "en" = "id",
+  customCompanyName?: string
 ): string {
+  const companyName = getCompanyName(customCompanyName);
   const base =
     origin ||
     (typeof window !== "undefined" && window.location.origin
@@ -112,7 +133,7 @@ export function generateWhatsAppReceiptMessage(
 
   if (lang === "en") {
     return [
-      `*OFFICIAL PAYMENT RECEIPT — FLOWDESK*`,
+      `*OFFICIAL PAYMENT RECEIPT — ${companyName.toUpperCase()}*`,
       `Dear *${invoice.clientName}*,`,
       ``,
       `We have confirmed receipt of your payment:`,
@@ -126,12 +147,12 @@ export function generateWhatsAppReceiptMessage(
       `🔗 ${payUrl}`,
       ``,
       `Thank you for your prompt payment!`,
-      `_FlowDesk Financial Operations_`,
+      `_${companyName} Financial Operations_`,
     ].join("\n");
   }
 
   return [
-    `*BUKTI PEMBAYARAN RESMI — FLOWDESK*`,
+    `*BUKTI PEMBAYARAN RESMI — ${companyName.toUpperCase()}*`,
     `Kepada Yth. *${invoice.clientName}*,`,
     ``,
     `Pembayaran Anda telah kami terima dan diverifikasi:`,
@@ -145,7 +166,7 @@ export function generateWhatsAppReceiptMessage(
     `🔗 ${payUrl}`,
     ``,
     `Terima kasih atas kepercayaan dan kerjasamanya!`,
-    `_FlowDesk Financial Operations_`,
+    `_${companyName} Financial Operations_`,
   ].join("\n");
 }
 
@@ -156,12 +177,13 @@ export function openWhatsAppInvoice(
   invoice: Invoice,
   origin?: string,
   lang: "id" | "en" = "id",
-  phoneNumber?: string
+  phoneNumber?: string,
+  customCompanyName?: string
 ): void {
   const message =
     invoice.status === "PAID"
-      ? generateWhatsAppReceiptMessage(invoice, origin, lang)
-      : generateWhatsAppInvoiceMessage(invoice, origin, lang);
+      ? generateWhatsAppReceiptMessage(invoice, origin, lang, customCompanyName)
+      : generateWhatsAppInvoiceMessage(invoice, origin, lang, customCompanyName);
 
   let url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 
